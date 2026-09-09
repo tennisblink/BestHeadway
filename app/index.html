@@ -127,6 +127,7 @@ body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,
 
 /* ── Login gate ── */
 .login-gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-gate[hidden]{display:none}
 .login-card{width:100%;max-width:340px;background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:28px 26px}
 .login-card .li{width:40px;height:40px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
 .login-card .li svg{width:20px;height:20px}
@@ -166,7 +167,7 @@ body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,
       <p>M1 Track Layout → M2 Rolling Stock → M3 Route Info → M4 Scenario Builder → M6 Interlocking → M5 Simulation → M7 Results</p>
     </div>
     <div class="topbar-right">
-      <span class="env-pill">Build 1 — M1/M2 protocol validation</span>
+      <span class="env-pill">All 7 modules wired</span>
     </div>
   </div>
 
@@ -221,16 +222,16 @@ body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,
 //   - postMessage protocol: MODULE_OUTPUT (module→shell), STATE_UPDATE (shell→module)
 //   - all iframes stay mounted in the DOM once first opened; switching steps
 //     only shows/hides them, so unsaved edits in a module survive tab switches
-//   - STATE_UPDATE auto-fill is sent to a module ONCE, right after it reports
-//     ready (MODULE_READY) — not on every subsequent visit — so the shell
-//     never overwrites edits the user has made locally but not yet "saved"
-//     inside that module. Re-sync behaviour for modules that depend on a
-//     LATER change in an upstream module (e.g. M5 depending on M6, M6 on M1)
-//     is an open question, flagged for when those modules' bridges are built.
+//   - STATE_UPDATE auto-fill is sent to a module ONCE, the first time it is
+//     BOTH ready (MODULE_READY) AND the currently active/visible step — not
+//     immediately on MODULE_READY (all 7 iframes mount and report ready
+//     together at page load, before the user has entered anything, so an
+//     immediate push would always deliver an empty STATE to every downstream
+//     module) and not on every subsequent visit — so the shell never
+//     overwrites edits the user has made locally but not yet "saved" inside
+//     that module. See maybeSendAutoFill() below.
 //
-// Only M1 and M2 have real module files this build; M3/M4/M6/M5/M7 show a
-// placeholder panel instead of pointing an iframe at a file that doesn't
-// exist yet.
+// All 7 modules (M1-M7) have real module files and are wired in.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Access gate (09/09/2026) ────────────────────────────────────────────
