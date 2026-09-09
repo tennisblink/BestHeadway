@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Module 2 — Rolling Stock & Simulation Parameters</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;font-size:14px;background:var(--color-background-tertiary,#f5f5f3);color:var(--color-text-primary,#1a1a1a);min-height:100vh}
+.app{max-width:760px;margin:0 auto;padding:16px}
+.hdr{background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.hdr-icon{width:40px;height:40px;background:#E6F1FB;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#185FA5;font-size:20px;flex-shrink:0}
+.hdr h1{font-size:16px;font-weight:500}
+.hdr p{font-size:12px;color:#666;margin-top:2px}
+.panel{background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:20px;margin-bottom:14px}
+.sec-title{font-size:13px;font-weight:500;color:#666;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:12px;color:#666;margin-bottom:4px}
+.fg .unit{font-size:11px;color:#999;margin-left:4px}
+.fg input,.fg select{width:100%;padding:7px 10px;border:0.5px solid rgba(0,0,0,.3);border-radius:8px;font-size:13px;background:var(--color-background-primary,#fff);color:var(--color-text-primary,#1a1a1a)}
+.info-box{border-radius:8px;padding:11px;font-size:12px;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start;line-height:1.6}
+.ib{background:#E6F1FB;color:#185FA5}
+.ig{background:#EAF3DE;color:#3B6D11}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.btn{padding:9px 16px;border:0.5px solid rgba(0,0,0,.25);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px;color:var(--color-text-primary,#1a1a1a)}
+.btn:hover{background:var(--color-background-secondary,#f5f5f3)}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn-primary:hover{background:#0C447C}
+.preview{background:var(--color-background-secondary,#f5f5f3);border-radius:8px;padding:14px;font-family:monospace;font-size:11.5px;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto;line-height:1.5}
+.load-zone{border:1px dashed rgba(0,0,0,.3);border-radius:8px;padding:14px;text-align:center;cursor:pointer;font-size:12px;color:#666;margin-bottom:12px}
+.load-zone:hover{background:var(--color-background-secondary,#f5f5f3)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.badge-ok{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#3B6D11;background:#EAF3DE;padding:2px 8px;border-radius:10px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div class="hdr-icon"><i class="ti ti-settings"></i></div>
+  <div>
+    <h1>Module 2 — Rolling Stock &amp; Simulation Parameters</h1>
+    <p>Pure input module. Outputs a parameter set consumed by the Simulation Engine (Module 5).</p>
+  </div>
+</div>
+
+<div class="info-box ib">
+  <i class="ti ti-info-circle"></i>
+  <div>This module has no dependencies on other modules. It produces one JSON file: <strong>sim_parameters.json</strong>. Download it when done, or load a previously saved one to keep editing.</div>
+</div>
+
+<div class="panel">
+  <div class="sec-title"><i class="ti ti-train"></i> Rolling stock characteristics</div>
+  <div class="grid2">
+    <div class="fg"><label>Train name / designation</label>
+      <input type="text" id="rs-name" value="NEL trains"></div>
+    <div class="fg"><label>Train length <span class="unit">(m)</span></label>
+      <input type="number" id="rs-length" value="140" min="1" step="1"></div>
+    <div class="fg"><label>Total mass <span class="unit">(tonnes)</span></label>
+      <input type="number" id="rs-mass" value="250" min="1" step="1"></div>
+    <div class="fg"><label>Civil speed limit <span class="unit">(km/h)</span></label>
+      <input type="number" id="rs-maxspeed" value="90" min="1" step="1"></div>
+    <div class="fg"><label>Max acceleration <span class="unit">(m/s²)</span></label>
+      <input type="number" id="rs-accel" value="1.1" min="0.1" step="0.1"></div>
+    <div class="fg"><label>Service braking rate <span class="unit">(m/s²)</span></label>
+      <input type="number" id="rs-brake" value="1.0" min="0.1" step="0.1"></div>
+    <div class="fg"><label>Emergency braking rate <span class="unit">(m/s²)</span></label>
+      <input type="number" id="rs-ebrake" value="1.3" min="0.1" step="0.1"></div>
+    <div class="fg"><label>Jerk rate limit <span class="unit">(m/s³)</span></label>
+      <input type="number" id="rs-jerk" value="0.6" min="0.1" step="0.1"></div>
+    <div class="fg"><label>Braking delay <span class="unit">(s)</span></label>
+      <input type="number" id="rs-brakedelay" value="0" min="0" step="0.1"></div>
+    <div class="fg"><label>Propulsion delay <span class="unit">(s)</span></label>
+      <input type="number" id="rs-propdel" value="0" min="0" step="0.1"></div>
+    <div class="fg"><label>Default dwell time <span class="unit">(s)</span></label>
+      <input type="number" id="rs-dwell" value="28" min="0" step="1"></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="sec-title"><i class="ti ti-signal-5g"></i> Signalling / simulation constants</div>
+  <div class="grid2">
+    <div class="fg"><label>Safety margin <span class="unit">(s)</span></label>
+      <input type="number" id="sg-safety" value="5" min="0" step="1"></div>
+    <div class="fg"><label>Reaction time <span class="unit">(s)</span></label>
+      <input type="number" id="sg-reaction" value="2" min="0" step="1"></div>
+    <div class="fg"><label>Speed margin <span class="unit">(km/h)</span></label>
+      <input type="number" id="sg-speedmargin" value="10" min="0" step="1"></div>
+    <div class="fg"><label>Block update rate <span class="unit">(Hz)</span></label>
+      <input type="number" id="sg-updaterate" value="10" min="1" step="1"></div>
+    <div class="fg"><label>Simulation tick interval <span class="unit">(s)</span></label>
+      <input type="number" id="sg-tick" value="0.2" min="0.1" step="0.1"></div>
+    <div class="fg"><label>Route setting time <span class="unit">(s)</span></label>
+      <input type="number" id="sg-routesetting" value="10" min="0" step="1"
+        title="Time between route request and route being set (point movement + detection). Used by M5 interlocking lookahead trigger."></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="sec-title"><i class="ti ti-file-export"></i> Output</div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="downloadParams()"><i class="ti ti-download"></i> Download sim_parameters.json</button>
+    <button class="btn" onclick="document.getElementById('load-inp').click()"><i class="ti ti-folder-open"></i> Load existing file</button>
+    <input type="file" id="load-inp" accept=".json" style="display:none" onchange="loadParams(event)">
+  </div>
+  <div id="load-status" style="display:none;margin-top:10px"></div>
+
+  <div style="margin-top:16px">
+    <div class="sec-title" style="margin-bottom:8px"><i class="ti ti-code"></i> Live preview of output JSON</div>
+    <div class="preview" id="json-preview"></div>
+  </div>
+</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// MODULE 2 — ROLLING STOCK & SIMULATION PARAMETERS
+//
+// This module is fully self-contained. It reads form values and produces
+// a single JSON object: the "parameter set" consumed by Module 5.
+//
+// OUTPUT CONTRACT (sim_parameters.json):
+// {
+//   "schema": "sim_parameters_v1",
+//   "rollingStock": {
+//     "name": string,
+//     "lengthM": number,
+//     "massTonnes": number,
+//     "civilSpeedLimitKmh": number,    // line's max permitted speed; fallback when section has no explicit limit
+//     "accelMs2": number,
+//     "serviceBrakeMs2": number,
+//     "emergencyBrakeMs2": number,
+//     "jerkRateLimitMs3": number,      // rate of change of acceleration (m/s³)
+//     "brakingDelaySec": number,       // mechanical delay before braking force is applied
+//     "propulsionDelaySec": number,    // mechanical delay before propulsion force is applied
+//     "defaultDwellSec": number
+//   },
+//   "signalling": {
+//     "safetyMarginSec": number,
+//     "reactionTimeSec": number,
+//     "speedMarginKmh": number,        // subtracted from civil speed limit to get operating speed
+//     "blockUpdateRateHz": number,
+//     "simTickIntervalSec": number,
+//     "routeSettingTimeSec": number    // time between route request and route set (point movement + detection)
+//   }
+// }
+// ═══════════════════════════════════════════════════════════════════════════
+
+const FIELD_IDS = [
+  'rs-name','rs-length','rs-mass','rs-maxspeed','rs-accel','rs-brake','rs-ebrake',
+  'rs-jerk','rs-brakedelay','rs-propdel','rs-dwell',
+  'sg-safety','sg-reaction','sg-speedmargin','sg-updaterate','sg-tick','sg-routesetting'
+];
+
+function buildParamsObject(){
+  return {
+    schema: 'sim_parameters_v1',
+    rollingStock: {
+      name:                document.getElementById('rs-name').value || 'Unnamed train',
+      lengthM:             parseFloat(document.getElementById('rs-length').value)     || 0,
+      massTonnes:          parseFloat(document.getElementById('rs-mass').value)       || 0,
+      civilSpeedLimitKmh:  parseFloat(document.getElementById('rs-maxspeed').value)   || 0,
+      accelMs2:            parseFloat(document.getElementById('rs-accel').value)      || 0,
+      serviceBrakeMs2:     parseFloat(document.getElementById('rs-brake').value)      || 0,
+      emergencyBrakeMs2:   parseFloat(document.getElementById('rs-ebrake').value)     || 0,
+      jerkRateLimitMs3:    parseFloat(document.getElementById('rs-jerk').value)       || 0.6,
+      brakingDelaySec:     parseFloat(document.getElementById('rs-brakedelay').value) || 0,
+      propulsionDelaySec:  parseFloat(document.getElementById('rs-propdel').value)    || 0,
+      defaultDwellSec:     parseFloat(document.getElementById('rs-dwell').value)      || 0
+    },
+    signalling: {
+      safetyMarginSec:    parseFloat(document.getElementById('sg-safety').value)        || 0,
+      reactionTimeSec:    parseFloat(document.getElementById('sg-reaction').value)      || 0,
+      speedMarginKmh:     parseFloat(document.getElementById('sg-speedmargin').value)   || 10,
+      blockUpdateRateHz:  parseFloat(document.getElementById('sg-updaterate').value)    || 1,
+      simTickIntervalSec: parseFloat(document.getElementById('sg-tick').value)          || 1,
+      routeSettingTimeSec:parseFloat(document.getElementById('sg-routesetting').value)  || 10
+    }
+  };
+}
+
+function refreshPreview(){
+  const obj = buildParamsObject();
+  document.getElementById('json-preview').textContent = JSON.stringify(obj, null, 2);
+}
+
+function downloadParams(){
+  const obj = buildParamsObject();
+  const json = JSON.stringify(obj, null, 2);
+  const uri = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+  const a = document.createElement('a');
+  a.href = uri;
+  a.download = 'sim_parameters.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('Downloaded sim_parameters.json');
+}
+
+function loadParams(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const obj = JSON.parse(e.target.result);
+      if(!obj.rollingStock || !obj.signalling) throw new Error('Missing rollingStock or signalling section');
+
+      const rs = obj.rollingStock, sg = obj.signalling;
+      document.getElementById('rs-name').value       = rs.name ?? '';
+      document.getElementById('rs-length').value     = rs.lengthM ?? '';
+      document.getElementById('rs-mass').value       = rs.massTonnes ?? '';
+      document.getElementById('rs-maxspeed').value   = rs.civilSpeedLimitKmh ?? rs.maxSpeedKmh ?? '';
+      document.getElementById('rs-accel').value      = rs.accelMs2 ?? '';
+      document.getElementById('rs-brake').value      = rs.serviceBrakeMs2 ?? '';
+      document.getElementById('rs-ebrake').value     = rs.emergencyBrakeMs2 ?? '';
+      document.getElementById('rs-jerk').value       = rs.jerkRateLimitMs3 ?? 0.6;
+      document.getElementById('rs-brakedelay').value = rs.brakingDelaySec ?? 0;
+      document.getElementById('rs-propdel').value    = rs.propulsionDelaySec ?? 0;
+      document.getElementById('rs-dwell').value      = rs.defaultDwellSec ?? '';
+
+      document.getElementById('sg-safety').value          = sg.safetyMarginSec ?? '';
+      document.getElementById('sg-reaction').value        = sg.reactionTimeSec ?? '';
+      document.getElementById('sg-speedmargin').value     = sg.speedMarginKmh ?? 10;
+      document.getElementById('sg-updaterate').value      = sg.blockUpdateRateHz ?? '';
+      document.getElementById('sg-tick').value            = sg.simTickIntervalSec ?? '';
+      document.getElementById('sg-routesetting').value    = sg.routeSettingTimeSec ?? 10;
+
+      refreshPreview();
+      const statusEl = document.getElementById('load-status');
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = `<span class="badge-ok"><i class="ti ti-check"></i> Loaded ${esc(file.name)}</span>`;
+      toast('Loaded ' + file.name);
+    } catch(err){
+      alert('Could not load file: ' + err.message + '\\n\\nExpected a sim_parameters.json file with "rollingStock" and "signalling" sections.');
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 2000);
+}
+
+// Live-update preview as user types
+FIELD_IDS.forEach(id=>{
+  document.getElementById(id).addEventListener('input', refreshPreview);
+});
+
+// Initial render
+refreshPreview();
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// SHELL BRIDGE (M2) — added 09/09/2026 for the integrated shell
+// (claude/shell_architecture_09092026.md). Appended after the module's own
+// script; does NOT modify any function above. Only active when this file is
+// loaded inside the shell's iframe — opened standalone, it's inert and the
+// module behaves exactly as before.
+//
+// Sync policy for M2: output is sent to the shell on every field change
+// (mirrors the module's own live-preview behaviour — buildParamsObject()
+// is already cheap and called on every keystroke). Input is applied via a
+// small applyParams(obj) helper that mirrors loadParams()'s fill logic
+// (loadParams itself reads from a <input type=file> change event, so it
+// can't be called directly with a plain STATE object).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if (window.parent === window) return; // standalone mode — bridge inactive
+
+  function sendOutput(){
+    window.parent.postMessage({ type:'MODULE_OUTPUT', module:'M2', payload: buildParamsObject() }, '*');
+  }
+
+  // Module → shell: on every field change, in addition to the existing
+  // live-preview listener (this is a separate listener, not a replacement).
+  FIELD_IDS.forEach(id=>{
+    document.getElementById(id).addEventListener('input', sendOutput);
+  });
+
+  // Module → shell, manual-upload path: the module's own loadParams() sets
+  // each <input>.value directly with JS after reading a user-picked file,
+  // which does NOT fire an 'input' event — so the listeners above miss it.
+  // loadParams() does call refreshPreview() by name once it's done, and
+  // because that's a plain identifier lookup at call time (not a reference
+  // captured earlier, unlike the addEventListener case), reassigning the
+  // global refreshPreview here redirects that call too. This makes a manual
+  // file upload sync to the shell without touching loadParams() itself.
+  const _origRefreshPreview = refreshPreview;
+  refreshPreview = function(){
+    _origRefreshPreview();
+    sendOutput();
+  };
+
+  // Shell → module: on STATE_UPDATE, pre-fill from STATE.simParameters if present.
+  function applyParams(obj){
+    if (!obj || !obj.rollingStock || !obj.signalling) return;
+    const rs = obj.rollingStock, sg = obj.signalling;
+    document.getElementById('rs-name').value       = rs.name ?? '';
+    document.getElementById('rs-length').value     = rs.lengthM ?? '';
+    document.getElementById('rs-mass').value       = rs.massTonnes ?? '';
+    document.getElementById('rs-maxspeed').value   = rs.civilSpeedLimitKmh ?? rs.maxSpeedKmh ?? '';
+    document.getElementById('rs-accel').value      = rs.accelMs2 ?? '';
+    document.getElementById('rs-brake').value      = rs.serviceBrakeMs2 ?? '';
+    document.getElementById('rs-ebrake').value     = rs.emergencyBrakeMs2 ?? '';
+    document.getElementById('rs-jerk').value       = rs.jerkRateLimitMs3 ?? 0.6;
+    document.getElementById('rs-brakedelay').value = rs.brakingDelaySec ?? 0;
+    document.getElementById('rs-propdel').value    = rs.propulsionDelaySec ?? 0;
+    document.getElementById('rs-dwell').value      = rs.defaultDwellSec ?? '';
+    document.getElementById('sg-safety').value          = sg.safetyMarginSec ?? '';
+    document.getElementById('sg-reaction').value        = sg.reactionTimeSec ?? '';
+    document.getElementById('sg-speedmargin').value     = sg.speedMarginKmh ?? 10;
+    document.getElementById('sg-updaterate').value      = sg.blockUpdateRateHz ?? '';
+    document.getElementById('sg-tick').value            = sg.simTickIntervalSec ?? '';
+    document.getElementById('sg-routesetting').value    = sg.routeSettingTimeSec ?? 10;
+    refreshPreview();
+  }
+
+  // M2 already syncs continuously, so REQUEST_SYNC is mostly a no-op here —
+  // handled anyway for consistency with M1 and in case a field was changed
+  // in a way that doesn't fire 'input' (belt-and-braces, cheap to send).
+  window.addEventListener('message', function(ev){
+    if (ev.source !== window.parent) return; // ignore anything not from the shell
+    const msg = ev.data;
+    if (!msg) return;
+    if (msg.type === 'STATE_UPDATE' && msg.payload && msg.payload.simParameters) {
+      applyParams(msg.payload.simParameters);
+    }
+    if (msg.type === 'REQUEST_SYNC') {
+      sendOutput();
+    }
+  });
+
+  // Tell the shell this module's bridge is attached and ready to receive
+  // STATE_UPDATE (the shell sends its one-time auto-fill in response).
+  window.parent.postMessage({ type:'MODULE_READY', module:'M2' }, '*');
+
+  // Also send M2's current defaults right away, so the shell has something
+  // for STATE.simParameters immediately rather than waiting on the first edit.
+  sendOutput();
+
+  // ── Width normalization (09/09/2026) ──────────────────────────────────
+  // Same override as M1's bridge — see that file's comment for why this is
+  // injected rather than edited into the module's own <style> block.
+  const styleOverride = document.createElement('style');
+  styleOverride.textContent = '.app{max-width:1000px}';
+  document.head.appendChild(styleOverride);
+
+  // ── Auto-height reporting (09/09/2026) ────────────────────────────────
+  // Same mechanism as M1's bridge — see that file's comment for why.
+  function reportHeight(){
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M2', height: document.documentElement.scrollHeight }, '*');
+  }
+  new ResizeObserver(reportHeight).observe(document.documentElement);
+  reportHeight();
+})();
+</script>
+</body>
+</html>
