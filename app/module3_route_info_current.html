@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Module 3 — Route Information</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;font-size:14px;background:var(--color-background-tertiary,#f5f5f3);color:var(--color-text-primary,#1a1a1a);min-height:100vh}
+.app{max-width:1100px;margin:0 auto;padding:16px}
+.hdr{background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.hdr-icon{width:40px;height:40px;background:#E6F1FB;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#185FA5;font-size:20px;flex-shrink:0}
+.hdr h1{font-size:16px;font-weight:500}
+.hdr p{font-size:12px;color:#666;margin-top:2px}
+.panel{background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:20px;margin-bottom:14px}
+.sec-title{font-size:13px;font-weight:500;color:#666;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.info-box{border-radius:8px;padding:11px;font-size:12px;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start;line-height:1.6}
+.ib{background:#E6F1FB;color:#185FA5}
+.ig{background:#EAF3DE;color:#3B6D11}
+.ia{background:#FAEEDA;color:#854F0B}
+.ir{background:#FCEBEB;color:#A32D2D}
+
+/* Upload zone */
+.upload-zone{border:1.5px dashed rgba(0,0,0,.25);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;color:#666;font-size:13px;transition:background .15s,border-color .15s}
+.upload-zone:hover,.upload-zone.over{background:#E6F1FB;border-color:#185FA5}
+.upload-zone.loaded{background:#EAF3DE;border-color:#3B6D11;color:#3B6D11;cursor:default}
+.upload-zone .uz-icon{font-size:28px;display:block;margin-bottom:8px;opacity:.5}
+.upload-zone strong{font-size:14px;display:block;margin-bottom:4px}
+
+/* Manual CSV link */
+.manual-toggle{font-size:12px;color:#185FA5;cursor:pointer;text-decoration:underline;text-underline-offset:2px;display:inline-block;margin-top:10px}
+.manual-toggle:hover{color:#0C447C}
+.manual-panel{display:none;margin-top:12px;border-top:0.5px solid rgba(0,0,0,.1);padding-top:12px}
+.manual-panel.open{display:block}
+.manual-upload-row{display:flex;gap:10px;flex-wrap:wrap}
+.mini-upload{flex:1;min-width:200px;border:0.5px dashed rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;cursor:pointer;font-size:11px;color:#666;transition:background .15s}
+.mini-upload:hover,.mini-upload.over{background:#E6F1FB;border-color:#185FA5}
+.mini-upload.loaded{background:#EAF3DE;border-color:#3B6D11;color:#3B6D11}
+
+/* Editable tables */
+.tbl-wrap{overflow-x:auto;margin-bottom:8px}
+.edit-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+.edit-tbl th{background:var(--color-background-secondary,#f5f5f3);padding:6px 8px;text-align:left;font-weight:500;color:#666;font-size:11px;border-bottom:0.5px solid rgba(0,0,0,.15);white-space:nowrap}
+.edit-tbl td{padding:3px 4px;border-bottom:0.5px solid rgba(0,0,0,.08);vertical-align:middle}
+.edit-tbl tr:last-child td{border-bottom:none}
+.edit-tbl tr:hover td{background:rgba(0,0,0,.02)}
+.edit-tbl input[type=text],.edit-tbl input[type=number],.edit-tbl select{width:100%;padding:4px 6px;border:0.5px solid transparent;border-radius:5px;font-size:12px;background:transparent;color:inherit;font-family:inherit}
+.edit-tbl input[type=text]:focus,.edit-tbl input[type=number]:focus,.edit-tbl select:focus{outline:none;border-color:#185FA5;background:#fff}
+.edit-tbl input[type=number]{-moz-appearance:textfield}
+.edit-tbl input[type=number]::-webkit-inner-spin-button{opacity:0}
+.edit-tbl input[type=number]:hover::-webkit-inner-spin-button{opacity:1}
+/* read-only distance cell */
+.dist-cell{padding:4px 8px;border-radius:5px;font-size:12px;color:#888;background:rgba(0,0,0,.04);font-variant-numeric:tabular-nums;white-space:nowrap;cursor:default}
+.dist-cell.jump-warn{background:#FAEEDA;color:#854F0B}
+/* delete btn */
+.del-row-btn{padding:3px 7px;border:0.5px solid rgba(0,0,0,.2);border-radius:5px;background:#fff;cursor:pointer;color:#A32D2D;font-size:11px;white-space:nowrap}
+.del-row-btn:hover{background:#FCEBEB}
+/* direction badge select */
+.dir-sel{padding:3px 6px;border:0.5px solid rgba(0,0,0,.2);border-radius:12px;font-size:11px;background:#fff;cursor:pointer}
+
+/* Buttons */
+.btn{padding:8px 14px;border:0.5px solid rgba(0,0,0,.25);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px;color:var(--color-text-primary,#1a1a1a)}
+.btn:hover{background:var(--color-background-secondary,#f5f5f3)}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn-primary:hover{background:#0C447C}
+.btn-sm{padding:5px 10px;font-size:12px;border:0.5px solid rgba(0,0,0,.2);border-radius:6px;background:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:4px;color:#444}
+.btn-sm:hover{background:#f5f5f3}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px}
+.bu{background:#E6F1FB;color:#185FA5}
+.bd{background:#FAEEDA;color:#854F0B}
+ul.err-list{margin:6px 0 0 16px;line-height:1.8}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:200}
+.toast.show{opacity:1}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--color-background-primary,#fff);border-radius:12px;padding:24px;width:480px;max-width:94vw;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.modal h2{font-size:15px;font-weight:500;margin-bottom:6px}
+.modal p{font-size:12px;color:#666;margin-bottom:16px;line-height:1.6}
+.map-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
+.map-row .raw{flex:1;font-family:monospace;background:#f5f5f3;padding:4px 8px;border-radius:6px;font-size:12px}
+.map-row i{color:#aaa}
+.map-row select{padding:5px 8px;border:0.5px solid rgba(0,0,0,.25);border-radius:7px;font-size:12px;background:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div class="hdr-icon"><i class="ti ti-route"></i></div>
+  <div>
+    <h1>Module 3 — Route Information</h1>
+    <p>Extract routes from a track layout, review and edit, then export to Module 4.</p>
+  </div>
+</div>
+
+<!-- ═══ STEP 1 — INPUT ═══ -->
+<div class="panel">
+  <div class="sec-title"><i class="ti ti-file-import"></i> Step 1 — Load track layout</div>
+  <div class="info-box ib">
+    <i class="ti ti-info-circle"></i>
+    <div>Upload <strong>track_layout.json</strong> from Module 1. Routes and sections will be auto-extracted from your signals, gradients, and speed restrictions.</div>
+  </div>
+
+  <div class="upload-zone" id="uz-json"
+       onclick="document.getElementById('inp-json').click()"
+       ondragover="event.preventDefault();this.classList.add('over')"
+       ondragleave="this.classList.remove('over')"
+       ondrop="handleJsonDrop(event)">
+    <i class="ti ti-topology-star-3 uz-icon"></i>
+    <strong>track_layout.json</strong>
+    <span style="font-size:12px;color:#888">Drag &amp; drop or click to upload</span>
+    <input type="file" id="inp-json" accept=".json" style="display:none" onchange="loadJson(event)">
+  </div>
+
+  <!-- Manual CSV — subtle secondary path -->
+  <span class="manual-toggle" onclick="toggleManual()"><i class="ti ti-table-import" style="font-size:11px"></i> or upload routes.csv / route_sections.csv manually</span>
+  <div class="manual-panel" id="manual-panel">
+    <div class="manual-upload-row">
+      <div class="mini-upload" id="mu-routes"
+           onclick="document.getElementById('inp-routes').click()"
+           ondragover="event.preventDefault();this.classList.add('over')"
+           ondragleave="this.classList.remove('over')"
+           ondrop="handleCsvDrop(event,'routes')">
+        <i class="ti ti-file-spreadsheet" style="font-size:16px;display:block;margin-bottom:4px"></i>
+        <strong>routes.csv</strong><br>
+        <span style="font-size:10px">route_id, from_signal, from_chainage_m…</span>
+        <input type="file" id="inp-routes" accept=".csv" style="display:none" onchange="loadCsv(event,'routes')">
+      </div>
+      <div class="mini-upload" id="mu-sections"
+           onclick="document.getElementById('inp-sections').click()"
+           ondragover="event.preventDefault();this.classList.add('over')"
+           ondragleave="this.classList.remove('over')"
+           ondrop="handleCsvDrop(event,'sections')">
+        <i class="ti ti-file-spreadsheet" style="font-size:16px;display:block;margin-bottom:4px"></i>
+        <strong>route_sections.csv</strong><br>
+        <span style="font-size:10px">route_id, section_seq, from_chainage_m…</span>
+        <input type="file" id="inp-sections" accept=".csv" style="display:none" onchange="loadCsv(event,'sections')">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STEP 2 — ROUTES TABLE ═══ -->
+<div class="panel" id="routes-panel" style="display:none">
+  <div class="sec-title"><i class="ti ti-table"></i> Step 2 — Routes <span id="routes-count" style="font-weight:400;color:#aaa;margin-left:4px"></span></div>
+  <div class="tbl-wrap">
+    <table class="edit-tbl" id="routes-tbl">
+      <thead><tr>
+        <th>Route ID</th>
+        <th>From Signal</th>
+        <th>From CH (m)</th>
+        <th>To Signal</th>
+        <th>To CH (m)</th>
+        <th>Distance (m)</th>
+        <th>Direction</th>
+        <th>Track</th>
+        <th>Description</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="routes-tbody"></tbody>
+    </table>
+  </div>
+  <button class="btn-sm" onclick="addRouteRow()"><i class="ti ti-plus"></i> Add route</button>
+</div>
+
+<!-- ═══ STEP 3 — SECTIONS TABLE ═══ -->
+<div class="panel" id="sections-panel" style="display:none">
+  <div class="sec-title"><i class="ti ti-list-details"></i> Step 3 — Route Sections <span id="sections-count" style="font-weight:400;color:#aaa;margin-left:4px"></span></div>
+  <div class="tbl-wrap">
+    <table class="edit-tbl" id="sections-tbl">
+      <thead><tr>
+        <th>Route ID</th>
+        <th>Seq</th>
+        <th>Track</th>
+        <th>From CH (m)</th>
+        <th>To CH (m)</th>
+        <th>Distance (m)</th>
+        <th>Gradient (‰)</th>
+        <th>Speed (km/h)</th>
+        <th>Notes</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="sections-tbody"></tbody>
+    </table>
+  </div>
+  <button class="btn-sm" onclick="addSectionRow()"><i class="ti ti-plus"></i> Add section</button>
+</div>
+
+<!-- ═══ STEP 4 — VALIDATION ═══ -->
+<div class="panel" id="validation-panel" style="display:none">
+  <div class="sec-title"><i class="ti ti-shield-check"></i> Step 4 — Validation</div>
+  <div id="validation-result"></div>
+</div>
+
+<!-- ═══ STEP 5 — EXPORT ═══ -->
+<div class="panel" id="export-panel" style="display:none">
+  <div class="sec-title"><i class="ti ti-file-export"></i> Step 5 — Export</div>
+  <div class="info-box ig">
+    <i class="ti ti-check"></i>
+    <div>All checks passed. Download the validated CSVs for Module 4.</div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="downloadCsv('routes')"><i class="ti ti-download"></i> Download routes.csv</button>
+    <button class="btn btn-primary" onclick="downloadCsv('sections')"><i class="ti ti-download"></i> Download route_sections.csv</button>
+  </div>
+</div>
+
+</div><!-- .app -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ DIRECTION MAPPING MODAL ═══ -->
+<div class="modal-bg" id="dir-modal">
+  <div class="modal">
+    <h2><i class="ti ti-arrows-exchange" style="margin-right:6px"></i>Confirm direction mapping</h2>
+    <p>The following direction values were found in your track layout. Map each one to <strong>up</strong> or <strong>down</strong> before extracting routes.</p>
+    <div id="dir-map-rows"></div>
+    <div class="btn-row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmMapping()"><i class="ti ti-wand"></i> Extract routes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// MODULE 3 — ROUTE INFORMATION (v2)
+//
+// Input:  track_layout.json (primary) OR routes.csv + route_sections.csv (manual)
+// Output: routes.csv + route_sections.csv
+//
+// CHAINAGE OFFSET TABLE — used ONLY during crossover route extraction
+// to compare turnout positions across different tracks that have independent
+// chainage systems. Adding the offset converts raw chainage to a common
+// reference frame so we can determine which turnout is "upstream" (up).
+//
+// Rule: reference_chainage = raw_chainage + offset
+// Default: NB offset = 0, SB offset = +15
+// (i.e. NB ch 100 is downstream of SB ch 90, because 100 < 90+15=105)
+//
+// Change these values if the network's chainage relationship changes.
+// Keys must match track_id values in track_layout.json exactly.
+const CHAINAGE_OFFSETS = {
+  'NB': 0,
+  'SB': 15
+};
+// Default offset for any track not listed above
+const CHAINAGE_OFFSET_DEFAULT = 0;
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── In-memory state ────────────────────────────────────────────────────────
+// ── In-memory state ────────────────────────────────────────────────────────
+let layout = null;     // parsed track_layout.json
+let dirMapping = {};   // { rawDirValue: 'up'|'down' }
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+function t(s){ return String(s||'').trim(); }
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2500);
+}
+function dl(content,filename){
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(content);
+  a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+function getOffset(trackId){
+  return CHAINAGE_OFFSETS[trackId]!==undefined ? CHAINAGE_OFFSETS[trackId] : CHAINAGE_OFFSET_DEFAULT;
+}
+function refCh(trackId, chainage){
+  return parseFloat(chainage)+getOffset(trackId);
+}
+function sigNum(signalId){
+  const m=String(signalId).match(/\d+/);
+  return m ? m[0] : signalId;
+}
+function makeRouteId(fromSig, toSig){
+  return `R${sigNum(fromSig)}_${sigNum(toSig)}`;
+}
+
+// ── Manual panel toggle ────────────────────────────────────────────────────
+function toggleManual(){
+  document.getElementById('manual-panel').classList.toggle('open');
+}
+
+// ── JSON loading ───────────────────────────────────────────────────────────
+function handleJsonDrop(e){
+  e.preventDefault();
+  document.getElementById('uz-json').classList.remove('over');
+  const f=e.dataTransfer.files[0]; if(f) parseJson(f);
+}
+function loadJson(e){
+  const f=e.target.files[0]; if(f) parseJson(f);
+}
+function parseJson(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      layout=JSON.parse(ev.target.result);
+      const uz=document.getElementById('uz-json');
+      uz.classList.add('loaded');
+      uz.innerHTML=`<i class="ti ti-check uz-icon" style="opacity:1"></i><strong>${esc(file.name)}</strong><span style="font-size:12px;display:block;margin-top:2px">${(layout.signals||[]).length} signals · ${(layout.tracks||[]).length} tracks · ${(layout.crossovers||[]).length} crossovers</span>`;
+      openDirModal();
+    }catch(err){ alert('Error reading JSON: '+err.message); }
+  };
+  reader.readAsText(file);
+}
+
+// ── Direction mapping modal ────────────────────────────────────────────────
+function openDirModal(){
+  const dirValues=[...new Set((layout.signals||[]).map(s=>t(s.direction)).filter(Boolean))];
+  function suggest(d){
+    const dl=d.toLowerCase();
+    if(dl==='up'||dl==='nb'||dl.includes('north')||dl.includes('up')) return 'up';
+    if(dl==='down'||dl==='sb'||dl.includes('south')||dl.includes('down')) return 'down';
+    return 'up';
+  }
+  const rows=dirValues.map(d=>`
+    <div class="map-row">
+      <span class="raw">${esc(d)}</span>
+      <i class="ti ti-arrow-right"></i>
+      <select id="dirmap-${esc(d)}">
+        <option value="up" ${suggest(d)==='up'?'selected':''}>up</option>
+        <option value="down" ${suggest(d)==='down'?'selected':''}>down</option>
+      </select>
+    </div>`).join('');
+  document.getElementById('dir-map-rows').innerHTML=rows||'<p style="color:#aaa;font-size:12px">No direction values found in signals.</p>';
+  document.getElementById('dir-modal').classList.add('open');
+  dirMapping._keys=dirValues;
+}
+function closeModal(){
+  document.getElementById('dir-modal').classList.remove('open');
+}
+function confirmMapping(){
+  (dirMapping._keys||[]).forEach(d=>{
+    const sel=document.getElementById(`dirmap-${d}`);
+    if(sel) dirMapping[d]=sel.value;
+  });
+  closeModal();
+  extractFromLayout();
+}
+function mapDir(rawDir){
+  return dirMapping[t(rawDir)]||null; // null = unmapped → excluded from routes
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN EXTRACTION
+// ═══════════════════════════════════════════════════════════════════════════
+function extractFromLayout(){
+  const routes=[], sections=[];
+  const trackMap={};
+  (layout.tracks||[]).forEach(tr=>{ trackMap[t(tr.track_id)]=tr; });
+
+  // ── 1. MAIN-TRACK ROUTES ─────────────────────────────────────────────────
+  // Signals grouped strictly by mapped direction — no cross-direction pairing.
+  // UP:   sort ascending  → travel low→high ch
+  // DOWN: sort descending → travel high→low ch
+  (layout.tracks||[]).forEach(track=>{
+    const trackId=t(track.track_id);
+    const jumps=track.chainage_jumps||[];
+
+    const trackSigs=(layout.signals||[])
+      .filter(s=>t(s.track_id)===trackId)
+      .map(s=>({...s, chainage:parseFloat(s.chainage)||0, mappedDir:mapDir(s.direction)}))
+      .filter(s=>s.mappedDir!==null); // exclude signals with unmapped direction
+
+    const byDir={};
+    trackSigs.forEach(s=>{
+      if(!byDir[s.mappedDir]) byDir[s.mappedDir]=[];
+      byDir[s.mappedDir].push(s);
+    });
+
+    Object.entries(byDir).forEach(([dir,sigs])=>{
+      // Sort in travel order
+      if(dir==='up'){
+        sigs.sort((a,b)=>a.chainage-b.chainage);  // ascending: low→high ch
+      } else {
+        sigs.sort((a,b)=>b.chainage-a.chainage);  // descending: high→low ch
+      }
+
+      for(let i=0;i<sigs.length-1;i++){
+        const from=sigs[i], to=sigs[i+1];
+        const routeId=makeRouteId(from.signal_id, to.signal_id);
+        routes.push({
+          route_id:        routeId,
+          from_signal:     from.signal_id,
+          from_chainage_m: from.chainage,
+          to_signal:       to.signal_id,
+          to_chainage_m:   to.chainage,
+          direction:       dir,
+          track_id:        trackId,
+          description:     `${t(track.name||trackId)} ${from.signal_id}→${to.signal_id}`
+        });
+
+        const secs=buildTrackSections(
+          routeId, trackId,
+          from.chainage, to.chainage, dir,
+          layout.gradients||[],
+          layout.civil_speed_restrictions||[],
+          jumps
+        );
+        sections.push(...secs);
+      }
+    });
+  });
+
+  // ── 2. CROSSOVER ROUTES ───────────────────────────────────────────────────
+  //
+  // NEW MODEL (4-part sections per XO route):
+  //
+  // The crossover connecting track uses real mainline chainages on both sides
+  // of a surveying discontinuity (crossing_chainage_jump). No local chainage.
+  // traversal_distance_m is gone — distances are derived from real chainages.
+  //
+  // For UP route (S4 → downTurnout → jump → upTurnout → S1):
+  //   P1: entry signal → downTurnout toe      (mainline, buildTrackSections)
+  //   P2: downTurnout toe → jump.from/to_ch   (XO connecting track, pre-jump side)
+  //   P3: jump.from/to_ch → upTurnout toe     (XO connecting track, post-jump side)
+  //   P4: upTurnout toe → exit signal         (mainline, buildTrackSections)
+  //
+  // DOWN route is the mirror: S2 → upTurnout → jump → downTurnout → S3
+  //
+  // Jump side assignment:
+  //   The jump's from_track_id identifies which turnout "owns" the from_ch side.
+  //   The other turnout owns the to_ch side.
+  // ─────────────────────────────────────────────────────────────────────────
+  (layout.crossovers||[]).forEach(xo=>{
+    const tA=xo.turnout_A, tB=xo.turnout_B;
+    if(!tA||!tB) return;
+
+    // Validate crossing_chainage_jump — fall back to traversal_distance_m for
+    // legacy track_layout.json files that pre-date the M1 amendment.
+    const jmp=xo.crossing_chainage_jump;
+    const hasNewJump = jmp && jmp.from_ch!=null && jmp.to_ch!=null
+                       && jmp.from_track_id && jmp.to_track_id;
+    const legacyDist = parseFloat(xo.traversal_distance_m)||0;
+
+    if(!hasNewJump && !legacyDist){
+      console.warn(`XO ${xo.crossover_id}: no crossing_chainage_jump and no traversal_distance_m — skipping`);
+      return;
+    }
+    if(!hasNewJump){
+      console.warn(`XO ${xo.crossover_id}: crossing_chainage_jump missing — falling back to legacy traversal_distance_m (${legacyDist}m). Update track_layout.json in M1 to use the new model.`);
+    }
+
+    const refA=refCh(t(tA.track_id), tA.chainage);
+    const refB=refCh(t(tB.track_id), tB.chainage);
+    const upTurnout   = refA>=refB ? tA : tB;
+    const downTurnout = refA>=refB ? tB : tA;
+
+    const xoSpd = parseFloat(xo.speed_limit_kmh)||25;
+    const allSigs = layout.signals||[];
+
+    const downTrack = t(downTurnout.track_id);
+    const upTrack   = t(upTurnout.track_id);
+
+    // ── Resolve which side of the jump belongs to each turnout ──────────────
+    // Only applies when crossing_chainage_jump is present (new model).
+    let downJumpCh, upJumpCh;
+    if(hasNewJump){
+      const jmpFromTrack = t(jmp.from_track_id);
+      const jmpToTrack   = t(jmp.to_track_id);
+      if(jmpFromTrack===downTrack){
+        downJumpCh = parseFloat(jmp.from_ch);
+        upJumpCh   = parseFloat(jmp.to_ch);
+      } else if(jmpToTrack===downTrack){
+        downJumpCh = parseFloat(jmp.to_ch);
+        upJumpCh   = parseFloat(jmp.from_ch);
+      } else {
+        console.warn(`XO ${xo.crossover_id}: crossing_chainage_jump tracks (${jmpFromTrack}, ${jmpToTrack}) do not match turnout tracks (${downTrack}, ${upTrack}) — skipping`);
+        return;
+      }
+    }
+
+    // ── Helper: find closest signal on a given track/direction/side ─────────
+    // side='above': signal ch > turnoutCh
+    // side='below': signal ch < turnoutCh
+    function findSig(trackId, turnoutCh, mappedDir, side){
+      const candidates=allSigs
+        .filter(s=>t(s.track_id)===trackId && mapDir(s.direction)===mappedDir)
+        .map(s=>({...s, chainage:parseFloat(s.chainage)||0}))
+        .filter(s=>side==='above' ? s.chainage>turnoutCh : s.chainage<turnoutCh);
+      if(!candidates.length) return null;
+      candidates.sort((a,b)=>Math.abs(a.chainage-turnoutCh)-Math.abs(b.chainage-turnoutCh));
+      return candidates[0];
+    }
+
+    // Signal assignments (unchanged from previous model):
+    //   S1 = closest UP   signal above upTurnout.ch   on upTurnout track
+    //   S2 = closest DOWN signal above upTurnout.ch   on upTurnout track
+    //   S3 = closest DOWN signal below downTurnout.ch on downTurnout track
+    //   S4 = closest UP   signal below downTurnout.ch on downTurnout track
+    // Routes: UP = S4→XO→S1,  DOWN = S2→XO→S3
+    const S1=findSig(upTrack,   upTurnout.chainage,   'up',   'above');
+    const S2=findSig(upTrack,   upTurnout.chainage,   'down', 'above');
+    const S3=findSig(downTrack, downTurnout.chainage, 'down', 'below');
+    const S4=findSig(downTrack, downTurnout.chainage, 'up',   'below');
+
+    // ── Helper: build one XO connecting section ──────────────────────────────
+    // fromCh → toCh on the XO connecting track (track_id = xo.crossover_id).
+    // gradient is 0; speed limit is xoSpd; distance is |toCh − fromCh|.
+    function xoSec(rid, fromCh, toCh, label){
+      return {
+        route_id:rid, track_id:xo.crossover_id,
+        from_chainage_m:fromCh, to_chainage_m:toCh,
+        distance_m:Math.round(Math.abs(toCh-fromCh)*10)/10,
+        gradient_permille:0, speed_limit_kmh:xoSpd,
+        notes:`${xo.crossover_id} ${label}`
+      };
+    }
+
+    // ── UP route: S4 → downTurnout → [jump] → upTurnout → S1 ───────────────
+    // P1: S4.ch → downTurnout.toe on downTurnout mainline track (ascending ch)
+    // P2: downTurnout.toe → downJumpCh on XO connecting track (ascending)
+    // P3: upJumpCh → upTurnout.toe on XO connecting track (ascending)
+    // P4: upTurnout.toe → S1.ch on upTurnout mainline track (ascending ch)
+    if(S4&&S1){
+      const rid=makeRouteId(S4.signal_id, S1.signal_id);
+      routes.push({
+        route_id:rid, from_signal:S4.signal_id, from_chainage_m:S4.chainage,
+        to_signal:S1.signal_id, to_chainage_m:S1.chainage,
+        direction:'up', track_id:xo.crossover_id,
+        description:`${xo.name||xo.crossover_id}: ${S4.signal_id}→XO→${S1.signal_id}`
+      });
+      const p1=buildTrackSections(rid, downTrack, S4.chainage, downTurnout.chainage, 'up',
+        layout.gradients||[], layout.civil_speed_restrictions||[],
+        (trackMap[downTrack]||{}).chainage_jumps||[]);
+
+      let xoSections;
+      if(hasNewJump){
+        // New model: two sections either side of the chainage jump
+        xoSections=[
+          xoSec(rid, downTurnout.chainage, downJumpCh, 'pre-jump (UP)'),
+          xoSec(rid, upJumpCh, upTurnout.chainage, 'post-jump (UP)')
+        ];
+      } else {
+        // Legacy model: single section using traversal_distance_m
+        const p1ToCh=p1.length?p1[p1.length-1].to_chainage_m:downTurnout.chainage;
+        xoSections=[{route_id:rid, track_id:xo.crossover_id,
+          from_chainage_m:p1ToCh, to_chainage_m:p1ToCh+legacyDist,
+          distance_m:legacyDist, gradient_permille:0, speed_limit_kmh:xoSpd,
+          notes:`${xo.crossover_id} traversal (legacy)`}];
+      }
+
+      const p4=buildTrackSections(rid, upTrack, upTurnout.chainage, S1.chainage, 'up',
+        layout.gradients||[], layout.civil_speed_restrictions||[],
+        (trackMap[upTrack]||{}).chainage_jumps||[]);
+      const allSecs=[...p1,...xoSections,...p4];
+      allSecs.forEach((s,i)=>{ s.section_seq=i+1; });
+      sections.push(...allSecs);
+    } else {
+      console.warn(`XO ${xo.crossover_id}: no UP route — missing ${!S4?'S4 (UP signal below downTurnout)':''}${!S1?' S1 (UP signal above upTurnout)':''}`);
+    }
+
+    // ── DOWN route: S2 → upTurnout → [jump] → downTurnout → S3 ─────────────
+    // P1: S2.ch → upTurnout.toe on upTurnout mainline track (descending ch)
+    // P2: upTurnout.toe → upJumpCh on XO connecting track (descending)
+    // P3: downJumpCh → downTurnout.toe on XO connecting track (descending)
+    // P4: downTurnout.toe → S3.ch on downTurnout mainline track (descending ch)
+    if(S2&&S3){
+      const rid=makeRouteId(S2.signal_id, S3.signal_id);
+      routes.push({
+        route_id:rid, from_signal:S2.signal_id, from_chainage_m:S2.chainage,
+        to_signal:S3.signal_id, to_chainage_m:S3.chainage,
+        direction:'down', track_id:xo.crossover_id,
+        description:`${xo.name||xo.crossover_id}: ${S2.signal_id}→XO→${S3.signal_id}`
+      });
+      const p1=buildTrackSections(rid, upTrack, S2.chainage, upTurnout.chainage, 'down',
+        layout.gradients||[], layout.civil_speed_restrictions||[],
+        (trackMap[upTrack]||{}).chainage_jumps||[]);
+
+      let xoSections;
+      if(hasNewJump){
+        // New model: two sections either side of the chainage jump
+        xoSections=[
+          xoSec(rid, upTurnout.chainage, upJumpCh, 'pre-jump (DOWN)'),
+          xoSec(rid, downJumpCh, downTurnout.chainage, 'post-jump (DOWN)')
+        ];
+      } else {
+        // Legacy model: single section using traversal_distance_m
+        const p1ToCh=p1.length?p1[p1.length-1].to_chainage_m:upTurnout.chainage;
+        xoSections=[{route_id:rid, track_id:xo.crossover_id,
+          from_chainage_m:p1ToCh, to_chainage_m:p1ToCh-legacyDist,
+          distance_m:legacyDist, gradient_permille:0, speed_limit_kmh:xoSpd,
+          notes:`${xo.crossover_id} traversal (legacy)`}];
+      }
+
+      const p4=buildTrackSections(rid, downTrack, downTurnout.chainage, S3.chainage, 'down',
+        layout.gradients||[], layout.civil_speed_restrictions||[],
+        (trackMap[downTrack]||{}).chainage_jumps||[]);
+      const allSecs=[...p1,...xoSections,...p4];
+      allSecs.forEach((s,i)=>{ s.section_seq=i+1; });
+      sections.push(...allSecs);
+    } else {
+      console.warn(`XO ${xo.crossover_id}: no DOWN route — missing ${!S2?'S2 (DOWN signal above upTurnout)':''}${!S3?' S3 (DOWN signal below downTurnout)':''}`);
+    }
+  });
+
+  populateTables(routes, sections);
+  toast(`Extracted ${routes.length} routes, ${sections.length} sections`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION BUILDER
+//
+// Builds sections for a single track segment [fromCh → toCh] in travel order.
+//
+// Breakpoints come from: gradient boundaries, CSR boundaries, jump boundaries.
+//
+// CHAINAGE JUMPS are SKIPPED (not just split):
+//   If jump is from_ch=50 → to_ch=60, section before ends at ch 50,
+//   next section starts at ch 60. The gap 50→60 has no section.
+//   This makes distance_m = |to_ch - from_ch| accurate with no correction.
+//
+// Sections ordered in travel direction:
+//   UP   (dir='up')   → ascending ch, from_ch < to_ch per section
+//   DOWN (dir='down') → descending ch, from_ch > to_ch per section
+// ═══════════════════════════════════════════════════════════════════════════
+function buildTrackSections(routeId, trackId, fromCh, toCh, dir, gradients, csrs, jumps){
+  const lo=Math.min(fromCh,toCh), hi=Math.max(fromCh,toCh);
+  if(lo===hi) return [];
+
+  const tGrads=gradients.filter(g=>t(g.track_id||g.track)===trackId);
+  const tCsrs =csrs.filter(c=>t(c.track_id||c.track)===trackId);
+  // Only jumps within the range
+  const tJumps=jumps.filter(j=>{
+    const jf=parseFloat(j.from_ch)||0;
+    return jf>lo && jf<hi;
+  });
+
+  // Collect split points: both sides of each jump, plus gradient/CSR boundaries
+  const splitPts=new Set([lo,hi]);
+  tGrads.forEach(g=>{
+    const a=parseFloat(g.from_chainage_m||g.from_ch)||0;
+    const b=parseFloat(g.to_chainage_m||g.to_ch)||0;
+    if(a>lo&&a<hi) splitPts.add(a);
+    if(b>lo&&b<hi) splitPts.add(b);
+  });
+  tCsrs.forEach(c=>{
+    const a=parseFloat(c.from_chainage_m||c.from_ch)||0;
+    const b=parseFloat(c.to_chainage_m||c.to_ch)||0;
+    if(a>lo&&a<hi) splitPts.add(a);
+    if(b>lo&&b<hi) splitPts.add(b);
+  });
+  tJumps.forEach(j=>{
+    splitPts.add(parseFloat(j.from_ch)||0);
+    splitPts.add(parseFloat(j.to_ch)||0);
+  });
+
+  const pts=Array.from(splitPts).sort((a,b)=>a-b);
+
+  // Build a set of jump gaps to skip: {from_ch → to_ch}
+  const jumpGaps=new Map(tJumps.map(j=>[parseFloat(j.from_ch)||0, parseFloat(j.to_ch)||0]));
+
+  // Generate intervals [a,b] in ascending order, skipping jump gaps
+  const intervals=[];
+  for(let i=0;i<pts.length-1;i++){
+    const a=pts[i], b=pts[i+1];
+    if(jumpGaps.has(a) && jumpGaps.get(a)===b) continue; // skip the gap
+    intervals.push([a,b]);
+  }
+
+  if(!intervals.length){
+    return [{
+      route_id:routeId, track_id:trackId, section_seq:1,
+      from_chainage_m:fromCh, to_chainage_m:toCh,
+      distance_m:Math.abs(toCh-fromCh),
+      gradient_permille:0, speed_limit_kmh:0, notes:''
+    }];
+  }
+
+  // Build sections in ascending order first, then flip for down direction
+  const ascending=intervals.map(([a,b])=>{
+    const mid=(a+b)/2;
+    const gradRec=tGrads.find(g=>{
+      const ga=parseFloat(g.from_chainage_m||g.from_ch)||0;
+      const gb=parseFloat(g.to_chainage_m||g.to_ch)||0;
+      return mid>=Math.min(ga,gb)&&mid<=Math.max(ga,gb);
+    });
+    const gradVal=gradRec?(parseFloat(gradRec.gradient_permille||gradRec.gradient)||0):0;
+    const spdVal=lookupSpd(tCsrs,mid);
+    return {
+      route_id:routeId, track_id:trackId,
+      from_chainage_m:a, to_chainage_m:b,
+      distance_m:Math.round((b-a)*10)/10,
+      gradient_permille:gradVal, speed_limit_kmh:spdVal,
+      notes:gradRec?t(gradRec.notes||''):''
+    };
+  });
+
+  // For down direction: reverse order AND flip from/to so chainage decreases
+  let ordered;
+  if(dir==='up'){
+    ordered=ascending;
+  } else {
+    ordered=ascending.slice().reverse().map(s=>({
+      ...s,
+      from_chainage_m:s.to_chainage_m,
+      to_chainage_m:s.from_chainage_m
+    }));
+  }
+
+  ordered.forEach((s,i)=>{ s.section_seq=i+1; });
+  return ordered;
+}
+
+function lookupSpd(csrs, mid){
+  const app=csrs.filter(c=>{
+    const a=parseFloat(c.from_chainage_m||c.from_ch)||0;
+    const b=parseFloat(c.to_chainage_m||c.to_ch)||0;
+    return mid>=Math.min(a,b)&&mid<=Math.max(a,b);
+  });
+  let spd=0;
+  app.forEach(c=>{
+    const v=parseFloat(c.speed_limit_kmh||c.speed)||0;
+    if(spd===0||v<spd) spd=v;
+  });
+  return spd;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EDITABLE TABLES
+// ═══════════════════════════════════════════════════════════════════════════
+function populateTables(routes, sections){
+  document.getElementById('routes-tbody').innerHTML='';
+  routes.forEach(r=>appendRouteRow(r));
+  document.getElementById('routes-count').textContent=`(${routes.length})`;
+  document.getElementById('routes-panel').style.display='block';
+  document.getElementById('sections-tbody').innerHTML='';
+  sections.forEach(s=>appendSectionRow(s));
+  document.getElementById('sections-count').textContent=`(${sections.length})`;
+  document.getElementById('sections-panel').style.display='block';
+  runValidation();
+}
+
+function appendRouteRow(r){
+  const tbody=document.getElementById('routes-tbody');
+  const tr=document.createElement('tr');
+  const fromCh=parseFloat(r.from_chainage_m)||0;
+  const toCh  =parseFloat(r.to_chainage_m)||0;
+  tr.innerHTML=`
+    <td><input type="text" value="${esc(r.route_id||'')}" onchange="runValidation()" placeholder="R101_105"></td>
+    <td><input type="text" value="${esc(r.from_signal||'')}" onchange="runValidation()" placeholder="S101"></td>
+    <td><input type="number" value="${fromCh}" onchange="updateRouteDist(this.closest('tr'));runValidation()"></td>
+    <td><input type="text" value="${esc(r.to_signal||'')}" onchange="runValidation()" placeholder="S105"></td>
+    <td><input type="number" value="${toCh}" onchange="updateRouteDist(this.closest('tr'));runValidation()"></td>
+    <td><span class="dist-cell" title="Auto-derived from |to_ch − from_ch|">${Math.abs(toCh-fromCh).toFixed(1)}</span></td>
+    <td><select class="dir-sel" onchange="runValidation()">
+      <option value="up" ${r.direction==='up'?'selected':''}>↑ up</option>
+      <option value="down" ${r.direction==='down'?'selected':''}>↓ down</option>
+    </select></td>
+    <td><input type="text" value="${esc(r.track_id||'')}" onchange="runValidation()" placeholder="NB"></td>
+    <td><input type="text" value="${esc(r.description||'')}" onchange="runValidation()"></td>
+    <td><button class="del-row-btn" onclick="deleteRow(this,'routes')"><i class="ti ti-trash"></i></button></td>`;
+  tbody.appendChild(tr);
+}
+
+function updateRouteDist(tr){
+  const inp=tr.querySelectorAll('input[type=number]');
+  tr.querySelector('.dist-cell').textContent=Math.abs((parseFloat(inp[1].value)||0)-(parseFloat(inp[0].value)||0)).toFixed(1);
+}
+
+function addRouteRow(){
+  appendRouteRow({route_id:'',from_signal:'',from_chainage_m:0,to_signal:'',to_chainage_m:0,direction:'up',track_id:'',description:''});
+  document.getElementById('routes-panel').style.display='block';
+  updateRoutesCount();
+}
+
+function appendSectionRow(s){
+  const tbody=document.getElementById('sections-tbody');
+  const tr=document.createElement('tr');
+  const fromCh=parseFloat(s.from_chainage_m)||0;
+  const toCh  =parseFloat(s.to_chainage_m)||0;
+  tr.innerHTML=`
+    <td><input type="text" value="${esc(s.route_id||'')}" onchange="runValidation()" placeholder="R101_105"></td>
+    <td><input type="number" value="${s.section_seq||1}" min="1" onchange="runValidation()"></td>
+    <td><input type="text" value="${esc(s.track_id||'')}" onchange="runValidation()" placeholder="NB"></td>
+    <td><input type="number" value="${fromCh}" onchange="updateSectionDist(this.closest('tr'));runValidation()"></td>
+    <td><input type="number" value="${toCh}" onchange="updateSectionDist(this.closest('tr'));runValidation()"></td>
+    <td><span class="dist-cell" title="Auto-derived from |to_ch − from_ch|">${Math.abs(toCh-fromCh).toFixed(1)}</span></td>
+    <td><input type="number" value="${s.gradient_permille||0}" step="0.1" onchange="runValidation()"></td>
+    <td><input type="number" value="${s.speed_limit_kmh||0}" min="0" onchange="runValidation()"></td>
+    <td><input type="text" value="${esc(s.notes||'')}" onchange="runValidation()"></td>
+    <td><button class="del-row-btn" onclick="deleteRow(this,'sections')"><i class="ti ti-trash"></i></button></td>`;
+  tbody.appendChild(tr);
+}
+
+function updateSectionDist(tr){
+  const inp=tr.querySelectorAll('input[type=number]');
+  // inp: [seq, fromCh, toCh, grad, spd]
+  tr.querySelector('.dist-cell').textContent=Math.abs((parseFloat(inp[2].value)||0)-(parseFloat(inp[1].value)||0)).toFixed(1);
+}
+
+function addSectionRow(){
+  appendSectionRow({route_id:'',section_seq:1,track_id:'',from_chainage_m:0,to_chainage_m:0,distance_m:0,gradient_permille:0,speed_limit_kmh:0,notes:''});
+  document.getElementById('sections-panel').style.display='block';
+  updateSectionsCount();
+}
+
+function deleteRow(btn,type){
+  btn.closest('tr').remove();
+  if(type==='routes') updateRoutesCount(); else updateSectionsCount();
+  runValidation();
+}
+function updateRoutesCount(){
+  document.getElementById('routes-count').textContent=`(${document.getElementById('routes-tbody').rows.length})`;
+}
+function updateSectionsCount(){
+  document.getElementById('sections-count').textContent=`(${document.getElementById('sections-tbody').rows.length})`;
+}
+
+function readRoutesTable(){
+  return Array.from(document.getElementById('routes-tbody').rows).map(tr=>{
+    const inp=tr.querySelectorAll('input,select');
+    return {
+      route_id:t(inp[0].value), from_signal:t(inp[1].value),
+      from_chainage_m:parseFloat(inp[2].value)||0,
+      to_signal:t(inp[3].value), to_chainage_m:parseFloat(inp[4].value)||0,
+      direction:inp[5].value, track_id:t(inp[6].value), description:t(inp[7].value)
+    };
+  }).filter(r=>r.route_id);
+}
+
+function readSectionsTable(){
+  return Array.from(document.getElementById('sections-tbody').rows).map(tr=>{
+    const inp=tr.querySelectorAll('input');
+    // inp: [route_id, seq, track_id, fromCh, toCh, grad, spd, notes]
+    const fromCh=parseFloat(inp[3].value)||0, toCh=parseFloat(inp[4].value)||0;
+    return {
+      route_id:t(inp[0].value), section_seq:parseInt(inp[1].value)||1,
+      track_id:t(inp[2].value),
+      from_chainage_m:fromCh, to_chainage_m:toCh,
+      distance_m:Math.abs(toCh-fromCh),
+      gradient_permille:parseFloat(inp[5].value)||0,
+      speed_limit_kmh:parseFloat(inp[6].value)||0,
+      notes:t(inp[7].value)
+    };
+  }).filter(s=>s.route_id);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VALIDATION
+// Rule 1: route_id unique
+// Rule 2: section route_ids must exist in routes (no orphans)
+// Rule 3: section_seq must be 1..N with no gaps per route
+// Rule 4: sum of section distance_m must exactly equal sum of |to-from| per section
+// Rule 5: direction must be 'up' or 'down' only
+// ═══════════════════════════════════════════════════════════════════════════
+function runValidation(){
+  const routes=readRoutesTable(), sections=readSectionsTable();
+  if(!routes.length&&!sections.length){
+    document.getElementById('validation-panel').style.display='none';
+    document.getElementById('export-panel').style.display='none';
+    return;
+  }
+  const errors=[], warnings=[];
+
+  // Rule 1
+  const idCounts={};
+  routes.forEach(r=>{ idCounts[r.route_id]=(idCounts[r.route_id]||0)+1; });
+  Object.entries(idCounts).forEach(([id,n])=>{
+    if(n>1) errors.push(`Duplicate route_id <strong>${esc(id)}</strong> appears ${n} times.`);
+  });
+
+  // Rule 2
+  const routeIdSet=new Set(routes.map(r=>r.route_id));
+  const orphans=new Set();
+  sections.forEach(s=>{ if(!routeIdSet.has(s.route_id)) orphans.add(s.route_id); });
+  orphans.forEach(id=>errors.push(`Sections reference unknown route_id <strong>${esc(id)}</strong>.`));
+
+  // Rules 3 & 4
+  routes.forEach(r=>{
+    const secs=sections.filter(s=>s.route_id===r.route_id).sort((a,b)=>a.section_seq-b.section_seq);
+    if(!secs.length){ warnings.push(`Route <strong>${esc(r.route_id)}</strong> has no sections.`); return; }
+    // Rule 3
+    secs.forEach((s,i)=>{
+      if(s.section_seq!==i+1) errors.push(`Route <strong>${esc(r.route_id)}</strong>: section_seq gap — expected ${i+1}, found ${s.section_seq}.`);
+    });
+    // Rule 4 — exact: distance_m must equal |to_ch - from_ch| for each section, no tolerance
+    secs.forEach(s=>{
+      const computed=Math.round(Math.abs(s.to_chainage_m-s.from_chainage_m)*10)/10;
+      const stored  =Math.round(s.distance_m*10)/10;
+      if(computed!==stored)
+        errors.push(`Route <strong>${esc(r.route_id)}</strong> section ${s.section_seq}: distance_m (${stored}) does not match |to_ch − from_ch| (${computed}).`);
+    });
+  });
+
+  // Rule 5
+  routes.forEach(r=>{
+    if(r.direction!=='up'&&r.direction!=='down')
+      errors.push(`Route <strong>${esc(r.route_id)}</strong>: direction must be <em>up</em> or <em>down</em>, got "<strong>${esc(r.direction)}</strong>".`);
+  });
+
+  renderValidation(errors,warnings);
+  document.getElementById('export-panel').style.display=errors.length===0&&routes.length>0?'block':'none';
+}
+
+function renderValidation(errors,warnings){
+  document.getElementById('validation-panel').style.display='block';
+  let html='';
+  if(!errors.length&&!warnings.length){
+    html=`<div class="info-box ig"><i class="ti ti-check"></i><div><strong>All checks passed.</strong> Ready to export.</div></div>`;
+  } else {
+    if(errors.length) html+=`<div class="info-box ir"><i class="ti ti-alert-triangle"></i><div><strong>${errors.length} error(s) — fix before export:</strong><ul class="err-list">${errors.map(e=>`<li>${e}</li>`).join('')}</ul></div></div>`;
+    if(warnings.length) html+=`<div class="info-box ia"><i class="ti ti-info-circle"></i><div><strong>${warnings.length} warning(s):</strong><ul class="err-list">${warnings.map(w=>`<li>${w}</li>`).join('')}</ul></div></div>`;
+  }
+  document.getElementById('validation-result').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MANUAL CSV LOADING (Path B)
+// ═══════════════════════════════════════════════════════════════════════════
+function handleCsvDrop(e,type){
+  e.preventDefault();
+  document.getElementById(type==='routes'?'mu-routes':'mu-sections').classList.remove('over');
+  const f=e.dataTransfer.files[0]; if(f) parseCsvFile(f,type);
+}
+function loadCsv(e,type){ const f=e.target.files[0]; if(f) parseCsvFile(f,type); }
+function parseCsvFile(file,type){
+  Papa.parse(file,{header:true,skipEmptyLines:true,complete(res){
+    if(type==='routes'){
+      document.getElementById('routes-tbody').innerHTML='';
+      res.data.forEach(r=>appendRouteRow({
+        route_id:t(r.route_id), from_signal:t(r.from_signal),
+        from_chainage_m:parseFloat(r.from_chainage_m)||0,
+        to_signal:t(r.to_signal), to_chainage_m:parseFloat(r.to_chainage_m)||0,
+        direction:t(r.direction||'up'), track_id:t(r.track_id||''), description:t(r.description||'')
+      }));
+      document.getElementById('mu-routes').classList.add('loaded');
+      document.getElementById('mu-routes').innerHTML=`<i class="ti ti-check" style="font-size:16px;display:block;margin-bottom:4px"></i><strong>routes.csv</strong> — ${res.data.length} rows`;
+      document.getElementById('routes-count').textContent=`(${res.data.length})`;
+      document.getElementById('routes-panel').style.display='block';
+    } else {
+      document.getElementById('sections-tbody').innerHTML='';
+      res.data.forEach(s=>appendSectionRow({
+        route_id:t(s.route_id), section_seq:parseInt(s.section_seq)||1,
+        track_id:t(s.track_id||''),
+        from_chainage_m:parseFloat(s.from_chainage_m)||0,
+        to_chainage_m:parseFloat(s.to_chainage_m)||0,
+        distance_m:parseFloat(s.distance_m)||0,
+        gradient_permille:parseFloat(s.gradient_permille)||0,
+        speed_limit_kmh:parseFloat(s.speed_limit_kmh)||0,
+        notes:t(s.notes||'')
+      }));
+      document.getElementById('mu-sections').classList.add('loaded');
+      document.getElementById('mu-sections').innerHTML=`<i class="ti ti-check" style="font-size:16px;display:block;margin-bottom:4px"></i><strong>route_sections.csv</strong> — ${res.data.length} rows`;
+      document.getElementById('sections-count').textContent=`(${res.data.length})`;
+      document.getElementById('sections-panel').style.display='block';
+    }
+    runValidation();
+    toast(`${file.name} loaded`);
+  }});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════════════════════════════
+function downloadCsv(type){
+  if(type==='routes'){
+    const rows=readRoutesTable();
+    let csv='route_id,from_signal,from_chainage_m,to_signal,to_chainage_m,direction,track_id,description\n';
+    rows.forEach(r=>{
+      csv+=`"${r.route_id}","${r.from_signal}",${r.from_chainage_m},"${r.to_signal}",${r.to_chainage_m},"${r.direction}","${r.track_id}","${r.description.replace(/"/g,'""')}"\n`;
+    });
+    dl(csv,'routes.csv'); toast('Downloaded routes.csv');
+  } else {
+    const rows=readSectionsTable();
+    let csv='route_id,section_seq,track_id,from_chainage_m,to_chainage_m,distance_m,gradient_permille,speed_limit_kmh,notes\n';
+    rows.forEach(s=>{
+      csv+=`"${s.route_id}",${s.section_seq},"${s.track_id}",${s.from_chainage_m},${s.to_chainage_m},${s.distance_m},${s.gradient_permille},${s.speed_limit_kmh},"${s.notes.replace(/"/g,'""')}"\n`;
+    });
+    dl(csv,'route_sections.csv'); toast('Downloaded route_sections.csv');
+  }
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// SHELL BRIDGE (M3) — added 09/09/2026 for the integrated shell
+// (claude/shell_architecture_09092026.md). Appended after the module's own
+// script; does NOT modify any function above. Only active when this file is
+// loaded inside the shell's iframe — opened standalone, it's inert and the
+// module behaves exactly as before.
+//
+// Sync policy for M3 (confirmed 09/09/2026): output is sent to the shell
+// continuously — wraps runValidation() (already called after every table
+// edit, row add/delete, and CSV load) rather than editing its body.
+//
+// Input: on the shell's one-time STATE_UPDATE, if STATE.trackLayout is
+// present, this replicates the real upload flow — set `layout` and the
+// upload-zone UI exactly as parseJson() would, then open the direction-
+// mapping modal so the user still confirms up/down mapping before routes
+// are extracted (confirmed 09/09/2026: keep this manual step even when the
+// track layout arrives via the shell rather than a file).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if (window.parent === window) return; // standalone mode — bridge inactive
+
+  function sendOutput(){
+    window.parent.postMessage({
+      type:'MODULE_OUTPUT', module:'M3',
+      payload: { routes: readRoutesTable(), routeSections: readSectionsTable() }
+    }, '*');
+  }
+
+  // Module → shell: runValidation() already runs after every table edit,
+  // row add/delete, and CSV load — piggyback the sync there.
+  const _origRunValidation = runValidation;
+  runValidation = function(){
+    _origRunValidation();
+    sendOutput();
+  };
+
+  // Shell → module: pre-fill from STATE.trackLayout, same as a real upload.
+  function applyTrackLayout(trackLayoutData){
+    if (!trackLayoutData) return;
+    layout = trackLayoutData;
+    const uz = document.getElementById('uz-json');
+    uz.classList.add('loaded');
+    uz.innerHTML = `<i class="ti ti-check uz-icon" style="opacity:1"></i><strong>track_layout.json (from Module 1)</strong><span style="font-size:12px;display:block;margin-top:2px">${(layout.signals||[]).length} signals · ${(layout.tracks||[]).length} tracks · ${(layout.crossovers||[]).length} crossovers</span>`;
+    openDirModal();
+  }
+
+  window.addEventListener('message', function(ev){
+    if (ev.source !== window.parent) return; // ignore anything not from the shell
+    const msg = ev.data;
+    if (!msg) return;
+    if (msg.type === 'STATE_UPDATE' && msg.payload && msg.payload.trackLayout) {
+      applyTrackLayout(msg.payload.trackLayout);
+    }
+    if (msg.type === 'REQUEST_SYNC') {
+      sendOutput();
+    }
+    if (msg.type === 'REQUEST_RESIZE') {
+      requestAnimationFrame(()=>requestAnimationFrame(reportHeight));
+    }
+  });
+
+  // Tell the shell this module's bridge is attached and ready to receive
+  // STATE_UPDATE (the shell sends its one-time auto-fill in response).
+  window.parent.postMessage({ type:'MODULE_READY', module:'M3' }, '*');
+
+  // ── Width normalization (09/09/2026) ──────────────────────────────────
+  const styleOverride = document.createElement('style');
+  styleOverride.textContent = '.app{max-width:1000px}';
+  document.head.appendChild(styleOverride);
+
+  // ── Auto-height reporting (09/09/2026) ────────────────────────────────
+  function reportHeight(){
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M3', height: document.documentElement.scrollHeight }, '*');
+  }
+  new ResizeObserver(reportHeight).observe(document.documentElement);
+  reportHeight();
+})();
+</script>
+</body>
+</html>

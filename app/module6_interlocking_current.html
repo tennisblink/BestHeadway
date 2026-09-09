@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Module 6 — Interlocking</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;font-size:14px;background:var(--color-background-tertiary,#f5f5f3);color:var(--color-text-primary,#1a1a1a);min-height:100vh}
+.app{max-width:1100px;margin:0 auto;padding:16px}
+.hdr{background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.hdr-icon{width:40px;height:40px;background:#E6F1FB;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#185FA5;font-size:20px;flex-shrink:0}
+.hdr h1{font-size:16px;font-weight:500}
+.hdr p{font-size:12px;color:#666;margin-top:2px}
+.panel{background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:20px;margin-bottom:14px}
+.sec-title{font-size:13px;font-weight:500;color:#666;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.step-label{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#185FA5;color:#fff;border-radius:50%;font-size:11px;font-weight:600;flex-shrink:0}
+.info-box{border-radius:8px;padding:11px;font-size:12px;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start;line-height:1.6}
+.ib{background:#E6F1FB;color:#185FA5}
+.ig{background:#EAF3DE;color:#3B6D11}
+.ia{background:#FAEEDA;color:#854F0B}
+.ir{background:#FCEBEB;color:#A32D2D}
+.btn{padding:7px 14px;border:0.5px solid rgba(0,0,0,.25);border-radius:8px;background:#fff;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:6px;color:var(--color-text-primary,#1a1a1a);transition:background .1s}
+.btn:hover{background:var(--color-background-secondary,#f5f5f3)}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn-primary:hover{background:#0C447C}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.upload-zone{border:1px dashed rgba(0,0,0,.3);border-radius:8px;padding:14px;text-align:center;cursor:pointer;color:#666;font-size:13px;transition:background .15s;margin-bottom:10px}
+.upload-zone:hover,.upload-zone.over{background:#E6F1FB;border-color:#185FA5}
+.upload-zone.loaded{background:#EAF3DE;border-color:#3B6D11;color:#3B6D11;cursor:default}
+.file-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.file-label{font-size:12px;color:#666;width:180px;flex-shrink:0}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+
+/* ── Rule cards ── */
+.rule-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:4px}
+.rule-card{border:0.5px solid rgba(0,0,0,.15);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .15s,background .15s;position:relative;user-select:none}
+.rule-card:hover{background:var(--color-background-secondary,#f5f5f3)}
+.rule-card.checked{border-color:#185FA5;background:#E6F1FB}
+.rule-card.disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.rule-card-hdr{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px}
+.rule-checkbox{width:16px;height:16px;border:1.5px solid #bbb;border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background .15s}
+.rule-card.checked .rule-checkbox{border-color:#185FA5;background:#185FA5}
+.rule-card.checked .rule-checkbox::after{content:'';width:8px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg);margin-top:-2px}
+.rule-id{font-size:11px;font-weight:600;color:#185FA5;font-family:monospace;letter-spacing:.03em}
+.rule-group-tag{font-size:10px;padding:1px 6px;border-radius:8px;background:#f0f0ee;color:#666;margin-left:auto;flex-shrink:0}
+.rule-name{font-size:12px;font-weight:500;margin-bottom:3px}
+.rule-desc{font-size:11px;color:#888;line-height:1.5}
+.rule-impl{font-size:10px;margin-top:5px;padding:2px 6px;border-radius:4px;display:inline-block}
+.impl-full{background:#EAF3DE;color:#3B6D11}
+.impl-partial{background:#FAEEDA;color:#854F0B}
+.impl-stub{background:#f0f0ee;color:#888}
+
+/* ── Group section headers ── */
+.rule-group-hdr{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;display:flex;align-items:center;gap:6px}
+.rule-group-hdr::after{content:'';flex:1;height:0.5px;background:rgba(0,0,0,.12)}
+.mutex-note{font-size:11px;color:#854F0B;background:#FAEEDA;border-radius:6px;padding:4px 8px;display:inline-flex;align-items:center;gap:4px;margin-bottom:8px}
+
+/* ── Active ruleset panel ── */
+.active-rule-list{display:flex;flex-direction:column;gap:4px}
+.active-rule-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--color-background-secondary,#f5f5f3);border-radius:7px;font-size:12px}
+.active-rule-seq{width:20px;height:20px;background:#185FA5;color:#fff;border-radius:50%;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.active-rule-id{font-family:monospace;font-size:11px;font-weight:600;color:#185FA5;min-width:160px}
+.active-rule-name{font-size:11px;color:#666}
+.no-rules-msg{color:#aaa;font-size:12px;padding:8px 0;font-style:italic}
+
+/* ── Resource map table ── */
+.rm-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.rm-tbl th{background:var(--color-background-secondary,#f5f5f3);padding:5px 8px;text-align:left;font-weight:500;color:#666;font-size:10px;border-bottom:0.5px solid rgba(0,0,0,.15);white-space:nowrap}
+.rm-tbl td{padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07);vertical-align:top;font-size:11px}
+.rm-tbl tr:hover td{background:rgba(0,0,0,.02)}
+.rm-tag{display:inline-block;padding:1px 6px;border-radius:6px;font-size:10px;margin:1px 2px 1px 0}
+.tag-track{background:#E6F1FB;color:#185FA5}
+.tag-point{background:#FAEEDA;color:#854F0B}
+.tag-overlap{background:#EAF3DE;color:#3B6D11}
+.tag-none{background:#f0f0ee;color:#aaa}
+
+/* ── Ruleset name field ── */
+.ruleset-name-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ruleset-name-row label{font-size:12px;color:#666;white-space:nowrap}
+.ruleset-name-row input{flex:1;padding:7px 10px;border:0.5px solid rgba(0,0,0,.25);border-radius:8px;font-size:13px;background:var(--color-background-primary,#fff);color:var(--color-text-primary,#1a1a1a)}
+.ruleset-name-row input:focus{outline:none;border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.12)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-icon"><i class="ti ti-lock-cog"></i></div>
+  <div>
+    <h1>Module 6 — Interlocking</h1>
+    <p>Define interlocking rules, preview the resource map, and export interlocking_config.json for the simulation engine.</p>
+  </div>
+</div>
+
+<!-- STEP 1: LOAD INPUT FILES -->
+<div class="panel">
+  <div class="sec-title"><span class="step-label">1</span> Load input files</div>
+  <div class="info-box ib">
+    <i class="ti ti-info-circle"></i>
+    <div>Load the track layout and route files to build the resource map. The resource map identifies which track sections, turnouts, and overlaps each route requires.</div>
+  </div>
+  <div class="file-row">
+    <span class="file-label"><i class="ti ti-topology-star-3"></i> track_layout.json</span>
+    <div class="upload-zone" style="flex:1;padding:8px 12px" id="uz-layout"
+         onclick="document.getElementById('inp-layout').click()"
+         ondragover="event.preventDefault();this.classList.add('over')"
+         ondragleave="this.classList.remove('over')"
+         ondrop="handleDrop(event,'layout')">
+      Click or drag to load
+      <input type="file" id="inp-layout" accept=".json" style="display:none" onchange="loadFile(event,'layout')">
+    </div>
+  </div>
+  <div class="file-row">
+    <span class="file-label"><i class="ti ti-route"></i> routes.csv</span>
+    <div class="upload-zone" style="flex:1;padding:8px 12px" id="uz-routes"
+         onclick="document.getElementById('inp-routes').click()"
+         ondragover="event.preventDefault();this.classList.add('over')"
+         ondragleave="this.classList.remove('over')"
+         ondrop="handleDrop(event,'routes')">
+      Click or drag to load
+      <input type="file" id="inp-routes" accept=".csv" style="display:none" onchange="loadFile(event,'routes')">
+    </div>
+  </div>
+  <div class="file-row">
+    <span class="file-label"><i class="ti ti-list-details"></i> route_sections.csv</span>
+    <div class="upload-zone" style="flex:1;padding:8px 12px" id="uz-sections"
+         onclick="document.getElementById('inp-sections').click()"
+         ondragover="event.preventDefault();this.classList.add('over')"
+         ondragleave="this.classList.remove('over')"
+         ondrop="handleDrop(event,'sections')">
+      Click or drag to load
+      <input type="file" id="inp-sections" accept=".csv" style="display:none" onchange="loadFile(event,'sections')">
+    </div>
+  </div>
+  <div id="load-status" style="margin-top:8px;font-size:12px;color:#666"></div>
+</div>
+
+<!-- STEP 2: RULE LIBRARY -->
+<div class="panel" id="rules-panel" style="display:none">
+  <div class="sec-title"><span class="step-label">2</span> Rule library</div>
+  <div class="info-box ib">
+    <i class="ti ti-info-circle"></i>
+    <div>Select the interlocking rules to apply. Rules within the same group are mutually exclusive — selecting one deselects the others in the group. Rules are executed in the order shown in the Active Ruleset panel below.</div>
+  </div>
+  <div id="rule-library"></div>
+</div>
+
+<!-- STEP 3: ACTIVE RULESET -->
+<div class="panel" id="active-panel" style="display:none">
+  <div class="sec-title"><span class="step-label">3</span> Active ruleset</div>
+  <div class="info-box ig">
+    <i class="ti ti-info-circle"></i>
+    <div>Rules execute in this order every simulation tick. Request-phase rules (track occupancy, point locking, overlap) run when a train requests the next route. Release-phase rules run as the train clears sections. MA rules compute the movement authority every tick.</div>
+  </div>
+  <div class="ruleset-name-row">
+    <label>Ruleset name</label>
+    <input type="text" id="ruleset-name" placeholder="e.g. Traditional Interlocking" value="Traditional Interlocking">
+  </div>
+  <div class="active-rule-list" id="active-rule-list"></div>
+</div>
+
+<!-- STEP 4: RESOURCE MAP -->
+<div class="panel" id="resmap-panel" style="display:none">
+  <div class="sec-title"><span class="step-label">4</span> Resource map preview</div>
+  <div class="info-box ib">
+    <i class="ti ti-info-circle"></i>
+    <div>Read-only. Shows what resources each route requires. Built automatically from track_layout.json and route_sections.csv. Used by M5 to check resource conflicts at runtime.</div>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="rm-tbl" id="rm-tbl">
+      <thead><tr>
+        <th>Route ID</th><th>Direction</th><th>Track Sections</th>
+        <th>Turnouts Required</th><th>Overlap</th>
+      </tr></thead>
+      <tbody id="rm-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- STEP 5: EXPORT -->
+<div class="panel" id="export-panel" style="display:none">
+  <div class="sec-title"><span class="step-label">5</span> Export</div>
+  <div class="info-box ig">
+    <i class="ti ti-info-circle"></i>
+    <div>Export the interlocking configuration for use in Module 5. Load this file into M5's optional interlocking input to enforce the selected rules during simulation.</div>
+  </div>
+  <div id="export-summary" style="font-size:12px;color:#666;margin-bottom:12px"></div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="exportConfig()">
+      <i class="ti ti-download"></i> Export interlocking_config.json
+    </button>
+  </div>
+</div>
+
+<!-- DEV NOTE: HOW TO ADD A NEW RULE -->
+<div class="panel" id="dev-note-panel">
+  <div class="sec-title" style="cursor:pointer;margin-bottom:0" onclick="toggleDevNote()">
+    <i class="ti ti-code"></i> Developer note — how to add a new rule
+    <i class="ti ti-chevron-down" id="dev-note-chevron" style="margin-left:auto;font-size:13px;color:#aaa"></i>
+  </div>
+  <div id="dev-note-body" style="display:none;margin-top:14px">
+    <div class="info-box ia">
+      <i class="ti ti-alert-triangle"></i>
+      <div>Rule functions live in <strong>M5</strong> (module5_simulation.html). Rule definitions (names, descriptions, groups) live here in <strong>M6</strong>. Both must be updated together when adding a new rule — the rule ID is the link between them.</div>
+    </div>
+    <div style="font-size:12px;color:#444;line-height:1.8">
+      <p style="margin-bottom:10px"><strong>Step 1 — Add the rule function to M5</strong></p>
+      <p style="margin-bottom:6px">In <code style="background:#f0f0ee;padding:1px 5px;border-radius:4px">module5_simulation.html</code>, add a function following the standard interface:</p>
+      <pre style="background:#f5f5f3;border:0.5px solid rgba(0,0,0,.12);border-radius:8px;padding:12px;font-size:11px;overflow-x:auto;margin-bottom:14px">function ruleYOUR_RULE_ID(ctx) {
+  // ctx = { train_id, trainState, ilState, ilConfig, params,
+  //         allTrainStates, resourceMap, turnoutRegistry,
+  //         requestedRouteId }
+  //
+  // Must return:
+  return {
+    allow:            true | false,   // false = block route request
+    ma_ch:            number | null,  // MA chainage override (MA rules only)
+    ma_reason:        string,         // reason code for log
+    blocked_by_train: string | null,  // train causing the block
+    waiting_for:      string,         // human-readable resource description
+    sideEffects:      [],             // lockPoint / releasePoint mutations
+    warnings:         []              // non-fatal messages
+  };
+}</pre>
+      <p style="margin-bottom:6px">Then register it in the <code style="background:#f0f0ee;padding:1px 5px;border-radius:4px">IL_RULES</code> object:</p>
+      <pre style="background:#f5f5f3;border:0.5px solid rgba(0,0,0,.12);border-radius:8px;padding:12px;font-size:11px;overflow-x:auto;margin-bottom:14px">const IL_RULES = {
+  // ... existing rules ...
+  'YOUR_RULE_ID': ruleYOUR_RULE_ID   // ← add this line
+};</pre>
+
+      <p style="margin-bottom:10px"><strong>Step 2 — Add the rule definition to M6</strong></p>
+      <p style="margin-bottom:6px">In <code style="background:#f0f0ee;padding:1px 5px;border-radius:4px">module6_interlocking_*.html</code>, add an entry to the <code style="background:#f0f0ee;padding:1px 5px;border-radius:4px">RULE_DEFS</code> array:</p>
+      <pre style="background:#f5f5f3;border:0.5px solid rgba(0,0,0,.12);border-radius:8px;padding:12px;font-size:11px;overflow-x:auto;margin-bottom:14px">{
+  id:         'YOUR_RULE_ID',         // must match IL_RULES key in M5 exactly
+  name:       'Human-readable name',
+  desc:       'What this rule does and when it applies.',
+  group:      'group_key',            // internal grouping key
+  groupLabel: 'Group Label',          // displayed in UI section header
+  phase:      'request',              // request | always | release | ma
+  execOrder:  60,                     // controls order within phase; lower = earlier
+  impl:       'full',                 // full | partial | stub
+  defaultOn:  false,                  // pre-ticked on first load?
+  mutexGroup: null                    // string key if mutually exclusive with others,
+                                      // null if independent
+}</pre>
+
+      <p style="margin-bottom:10px"><strong>Phase reference</strong></p>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px">
+        <thead><tr style="background:#f5f5f3">
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid rgba(0,0,0,.15)">Phase</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid rgba(0,0,0,.15)">When it runs</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid rgba(0,0,0,.15)">Typical use</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)"><code>request</code></td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">When train triggers route request</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">Track occupancy, point locking, overlap check</td></tr>
+          <tr><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)"><code>always</code></td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">Every tick for every running train</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">Early point release, continuous checks</td></tr>
+          <tr><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)"><code>release</code></td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">When train exits route or section</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">Sectional release, full route release</td></tr>
+          <tr><td style="padding:5px 8px"><code>ma</code></td><td style="padding:5px 8px">Every tick — computes MA</td><td style="padding:5px 8px">MA to route end, MA to fouling point</td></tr>
+        </tbody>
+      </table>
+
+      <p style="margin-bottom:10px"><strong>Execution order reference</strong></p>
+      <p style="font-size:11px;color:#666;margin-bottom:6px">Current reserved ranges. Choose a value that places your rule in the right position within its phase:</p>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#f5f5f3">
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid rgba(0,0,0,.15)">execOrder range</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid rgba(0,0,0,.15)">Phase</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid rgba(0,0,0,.15)">Currently used by</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">10–19</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">request</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">SECTION_CONFLICT (10)</td></tr>
+          <tr><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">20–29</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">request</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">POINT_LOCK_ROUTE (20), POINT_LOCK_EARLY (21)</td></tr>
+          <tr><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">30–39</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">request</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">OVERLAP_ENFORCE (30)</td></tr>
+          <tr><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">40–49</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">release</td><td style="padding:5px 8px;border-bottom:0.5px solid rgba(0,0,0,.07)">FULL_ROUTE_RELEASE (40), SECTIONAL_RELEASE (41)</td></tr>
+          <tr><td style="padding:5px 8px">50–59</td><td style="padding:5px 8px">ma</td><td style="padding:5px 8px">MA_TO_ROUTE_END (50), MA_TO_FOULING_POINT (51)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- .app -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+// =========================================================================
+// MODULE 6 — INTERLOCKING  v1.0
+//
+// Inputs:  track_layout.json (M1), routes.csv (M3), route_sections.csv (M3)
+// Output:  interlocking_config.json (consumed by M5)
+//
+// Responsibilities:
+//   1. Build resource map: route → { track_sections, points, overlap }
+//   2. Present rule library with mutual-exclusion groups
+//   3. Show active ruleset in execution order
+//   4. Export interlocking_config.json
+// =========================================================================
+
+// ── State ─────────────────────────────────────────────────────────────────
+let layout=null, routes=[], sections=[];
+let resourceMap={}, turnoutRegistry={};
+let selectedRules=new Set();
+
+const LOADED={layout:false,routes:false,sections:false};
+
+// ── Rule definitions ──────────────────────────────────────────────────────
+// group: rules in the same group are mutually exclusive
+// phase: request | release | ma | always
+// execOrder: lower = runs first within phase
+const RULE_DEFS=[
+  {
+    id:'SECTION_CONFLICT',
+    name:'Section Conflict Check',
+    desc:'Blocks a route request if any of its track sections (or overlap) overlap with a section already reserved by another set or occupied route. Core interlocking safety rule — should always be enabled.',
+    group:'core', groupLabel:'Core',
+    phase:'request', execOrder:10,
+    impl:'full', defaultOn:true, mutexGroup:null
+  },
+  {
+    id:'POINT_LOCK_ROUTE',
+    name:'Point Lock — Full Route Duration',
+    desc:'Locks turnouts in the required position for the full duration of the route. Points are only released after the train has fully cleared the route and it transitions to free.',
+    group:'point_release', groupLabel:'Point Release',
+    phase:'request', execOrder:20,
+    impl:'full', defaultOn:true, mutexGroup:'point_release'
+  },
+  {
+    id:'POINT_LOCK_EARLY',
+    name:'Point Lock — Early Release',
+    desc:'Locks turnouts as with full route locking, but releases the point once the rear of the train has cleared the toe chainage. Allows following moves to be set sooner.',
+    group:'point_release', groupLabel:'Point Release',
+    phase:'always', execOrder:21,
+    impl:'full', defaultOn:false, mutexGroup:'point_release'
+  },
+  {
+    id:'OVERLAP_ENFORCE',
+    name:'Overlap Enforcement',
+    desc:'Extends the route lock to include an overlap section beyond the exit signal. Blocks the route if the overlap section is occupied. Provides a safety buffer for signal overruns.',
+    group:'overlap', groupLabel:'Overlap',
+    phase:'request', execOrder:30,
+    impl:'full', defaultOn:false, mutexGroup:null
+  },
+  {
+    id:'FULL_ROUTE_RELEASE',
+    name:'Route Release — Full Exit',
+    desc:'Releases all route resources (track sections, point locks) only after the train has fully exited the route. The traditional approach: nothing releases until the rear is clear.',
+    group:'route_release', groupLabel:'Route Release',
+    phase:'release', execOrder:40,
+    impl:'full', defaultOn:true, mutexGroup:'route_release'
+  },
+  {
+    id:'SECTIONAL_RELEASE',
+    name:'Route Release — Sectional',
+    desc:'Releases individual track sections progressively as the rear of the train clears each section boundary. Allows following trains to close up more tightly.',
+    group:'route_release', groupLabel:'Route Release',
+    phase:'release', execOrder:41,
+    impl:'stub', defaultOn:false, mutexGroup:'route_release'
+  },
+  {
+    id:'MA_TO_ROUTE_END',
+    name:'Movement Authority — Route End',
+    desc:'MA is granted to the end of the currently set route. If the next route is already set, MA extends to cover it too. Standard fixed-block approach.',
+    group:'ma_mode', groupLabel:'MA Mode',
+    phase:'ma', execOrder:50,
+    impl:'full', defaultOn:true, mutexGroup:'ma_mode'
+  },
+  {
+    id:'MA_TO_FOULING_POINT',
+    name:'Movement Authority — Fouling Point (CBTC)',
+    desc:'MA extends to the fouling point of the nearest locked turnout or occupied track section ahead, regardless of route boundaries. Enables moving-block / CBTC operation.',
+    group:'ma_mode', groupLabel:'MA Mode',
+    phase:'ma', execOrder:51,
+    impl:'partial', defaultOn:false, mutexGroup:'ma_mode'
+  }
+];
+
+// Execution order for active ruleset display
+// Phase order: request → always → release → ma
+const PHASE_ORDER={request:1,always:2,release:3,ma:4};
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+function T(s){return String(s||'').trim();}
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// ── File loading ──────────────────────────────────────────────────────────
+function handleDrop(e,key){
+  e.preventDefault();
+  document.getElementById('uz-'+key).classList.remove('over');
+  const f=e.dataTransfer.files[0];if(f)parseFile(f,key);
+}
+function loadFile(e,key){const f=e.target.files[0];if(f)parseFile(f,key);if(e.target)e.target.value='';}
+
+function parseFile(file,key){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      if(key==='layout'){
+        layout=JSON.parse(ev.target.result);
+        if(!layout.tracks||!layout.signals)throw new Error('Invalid track_layout.json');
+        markLoaded('layout','track_layout.json — '+
+          (layout.tracks||[]).length+' tracks · '+
+          (layout.signals||[]).length+' signals · '+
+          (layout.crossovers||[]).length+' crossovers');
+      } else {
+        Papa.parse(ev.target.result,{header:true,skipEmptyLines:true,complete(res){
+          if(key==='routes'){
+            routes=res.data.map(r=>({
+              route_id:T(r.route_id),
+              from_signal:T(r.from_signal), from_ch:parseFloat(r.from_chainage_m),
+              to_signal:T(r.to_signal),     to_ch:parseFloat(r.to_chainage_m),
+              direction:T(r.direction),     track_id:T(r.track_id)
+            })).filter(r=>r.route_id);
+            markLoaded('routes','routes.csv — '+routes.length+' routes');
+          }
+          if(key==='sections'){
+            sections=res.data.map(r=>({
+              route_id:T(r.route_id), seq:parseInt(r.section_seq),
+              track_id:T(r.track_id),
+              from_ch:parseFloat(r.from_chainage_m), to_ch:parseFloat(r.to_chainage_m),
+              dist_m:parseFloat(r.distance_m)
+            })).filter(s=>s.route_id);
+            markLoaded('sections','route_sections.csv — '+sections.length+' sections');
+          }
+        }});
+      }
+    }catch(err){alert('Error loading file: '+err.message);}
+  };
+  reader.readAsText(file);
+}
+
+function markLoaded(key,msg){
+  LOADED[key]=true;
+  const uz=document.getElementById('uz-'+key);
+  uz.classList.add('loaded');
+  uz.innerHTML='<i class="ti ti-check"></i> '+esc(msg);
+  if(Object.values(LOADED).every(v=>v)){
+    document.getElementById('load-status').innerHTML=
+      '<span style="color:#3B6D11"><i class="ti ti-check"></i> All files loaded — building resource map.</span>';
+    buildResourceMap();
+    renderRuleLibrary();
+    renderActiveRuleset();
+    renderResourceMap();
+    updateExportSummary();
+    document.getElementById('rules-panel').style.display='block';
+    document.getElementById('active-panel').style.display='block';
+    document.getElementById('resmap-panel').style.display='block';
+    document.getElementById('export-panel').style.display='block';
+  }
+}
+
+// =========================================================================
+// RESOURCE MAP BUILDER
+// =========================================================================
+function buildResourceMap(){
+  resourceMap={};
+  turnoutRegistry={};
+
+  // ── Build turnout registry from layout crossovers ──────────────────────
+  (layout.crossovers||[]).forEach(xo=>{
+    ['turnout_A','turnout_B'].forEach(key=>{
+      const tu=xo[key];
+      if(!tu||!tu.track_id) return;
+      const tid=`${xo.crossover_id}-${key==='turnout_A'?'A':'B'}`;
+      turnoutRegistry[tid]={
+        crossover_id:        xo.crossover_id,
+        track_id:            T(tu.track_id),
+        toe_ch:              tu.toe_chainage_m!=null ? parseFloat(tu.toe_chainage_m) : null,
+        blade_zone_main_ch:  tu.blade_zone_main_ch!=null ? parseFloat(tu.blade_zone_main_ch) : null,
+        blade_zone_crossing_ch: tu.blade_zone_crossing_ch!=null ? parseFloat(tu.blade_zone_crossing_ch) : null,
+        fouling_point_main_ch:  tu.fouling_point_main_ch!=null ? parseFloat(tu.fouling_point_main_ch) : null,
+        fouling_point_crossing_ch: tu.fouling_point_crossing_ch!=null ? parseFloat(tu.fouling_point_crossing_ch) : null
+      };
+    });
+  });
+
+  // ── Build resource map per route ───────────────────────────────────────
+  routes.forEach(route=>{
+    const rid=route.route_id;
+    const routeSecs=sections.filter(s=>s.route_id===rid).sort((a,b)=>a.seq-b.seq);
+
+    // Track sections: one entry per section row
+    const trackSections=routeSecs.map(s=>({
+      track_id: s.track_id,
+      from_ch:  Math.min(s.from_ch, s.to_ch),
+      to_ch:    Math.max(s.from_ch, s.to_ch)
+    }));
+
+    // Points: find turnouts whose crossover track_id appears in this route's sections.
+    // Detection: a section's track_id matches a crossover_id in the turnout registry,
+    // meaning the route traverses that crossover → both turnouts needed in reverse.
+    // This works regardless of crossover naming convention (T102, XO-001, etc).
+    const points=[];
+    const xoCrossoverIds=new Set(
+      routeSecs
+        .filter(s=> Object.values(turnoutRegistry).some(tu=>tu.crossover_id===s.track_id))
+        .map(s=>s.track_id)
+    );
+
+    xoCrossoverIds.forEach(xoId=>{
+      // Find both turnouts for this crossover
+      Object.entries(turnoutRegistry).forEach(([tid,tu])=>{
+        if(tu.crossover_id===xoId){
+          points.push({
+            turnout_id:              tid,
+            required_position:       'reverse',  // XO traversal always needs reverse
+            toe_ch:                  tu.toe_ch,
+            blade_zone_main_ch:      tu.blade_zone_main_ch,
+            blade_zone_crossing_ch:  tu.blade_zone_crossing_ch,
+            fouling_point_main_ch:   tu.fouling_point_main_ch,
+            fouling_point_crossing_ch: tu.fouling_point_crossing_ch
+          });
+        }
+      });
+    });
+
+    // For mainline routes that pass OVER a turnout (same track as turnout, no XO section):
+    // Those routes need that turnout in normal position.
+    // Detect: route sections on the same track as a turnout, where the section
+    // chainage span encompasses the turnout's toe chainage.
+    Object.entries(turnoutRegistry).forEach(([tid,tu])=>{
+      // Skip if already added via XO traversal
+      if(points.find(p=>p.turnout_id===tid)) return;
+      const mainSecs=routeSecs.filter(s=>s.track_id===tu.track_id);
+      const toeWithin=mainSecs.some(s=>{
+        const lo=Math.min(s.from_ch,s.to_ch), hi=Math.max(s.from_ch,s.to_ch);
+        return tu.toe_ch!=null && tu.toe_ch>=lo && tu.toe_ch<=hi;
+      });
+      if(toeWithin){
+        points.push({
+          turnout_id:              tid,
+          required_position:       'normal',  // mainline bypass needs normal
+          toe_ch:                  tu.toe_ch,
+          blade_zone_main_ch:      tu.blade_zone_main_ch,
+          blade_zone_crossing_ch:  tu.blade_zone_crossing_ch,
+          fouling_point_main_ch:   tu.fouling_point_main_ch,
+          fouling_point_crossing_ch: tu.fouling_point_crossing_ch
+        });
+      }
+    });
+
+    // Overlap: fixed 50m section beyond the exit signal on the exit track
+    // Uses the last section's track_id and to_ch
+    const lastSec=routeSecs.length ? routeSecs[routeSecs.length-1] : null;
+    let overlap=null;
+    if(lastSec){
+      const overlapDist=50; // metres — standard default
+      const exitCh=lastSec.to_ch;
+      // Direction: if ascending (to_ch > from_ch) overlap goes further up; else down
+      const ascending=lastSec.to_ch >= lastSec.from_ch;
+      overlap={
+        track_id: lastSec.track_id,
+        from_ch:  exitCh,
+        to_ch:    ascending ? exitCh+overlapDist : exitCh-overlapDist
+      };
+    }
+
+    resourceMap[rid]={ track_sections:trackSections, points, overlap };
+  });
+}
+
+// =========================================================================
+// RULE LIBRARY UI
+// =========================================================================
+function renderRuleLibrary(){
+  // Group rules by groupLabel
+  const groups={};
+  RULE_DEFS.forEach(r=>{
+    if(!groups[r.groupLabel]) groups[r.groupLabel]=[];
+    groups[r.groupLabel].push(r);
+  });
+
+  // Apply defaults on first render
+  if(selectedRules.size===0){
+    RULE_DEFS.filter(r=>r.defaultOn).forEach(r=>selectedRules.add(r.id));
+  }
+
+  let html='';
+  Object.entries(groups).forEach(([grpLabel,rules])=>{
+    const isMutex=rules[0].mutexGroup!==null;
+    html+=`<div class="rule-group-hdr"><i class="ti ti-point-filled" style="font-size:8px"></i> ${esc(grpLabel)}</div>`;
+    if(isMutex){
+      html+=`<div class="mutex-note"><i class="ti ti-alert-triangle" style="font-size:11px"></i> Mutually exclusive — select one only</div>`;
+    }
+    html+='<div class="rule-grid">';
+    rules.forEach(r=>{
+      const checked=selectedRules.has(r.id);
+      const implLabel=r.impl==='full'?'Full':r.impl==='partial'?'Partial':'Stub';
+      const implClass=r.impl==='full'?'impl-full':r.impl==='partial'?'impl-partial':'impl-stub';
+      html+=`
+      <div class="rule-card${checked?' checked':''}" id="card-${r.id}" onclick="toggleRule('${r.id}')">
+        <div class="rule-card-hdr">
+          <div class="rule-checkbox"></div>
+          <div style="flex:1">
+            <div class="rule-id">${esc(r.id)}</div>
+          </div>
+          <div class="rule-group-tag">${esc(r.phase)}</div>
+        </div>
+        <div class="rule-name">${esc(r.name)}</div>
+        <div class="rule-desc">${esc(r.desc)}</div>
+        <span class="rule-impl ${implClass}">${implLabel} implementation</span>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('rule-library').innerHTML=html;
+}
+
+function toggleRule(ruleId){
+  const def=RULE_DEFS.find(r=>r.id===ruleId);
+  if(!def) return;
+
+  if(selectedRules.has(ruleId)){
+    selectedRules.delete(ruleId);
+  } else {
+    // If this rule has a mutex group, deselect others in the same group
+    if(def.mutexGroup){
+      RULE_DEFS.filter(r=>r.mutexGroup===def.mutexGroup).forEach(r=>{
+        selectedRules.delete(r.id);
+        const card=document.getElementById('card-'+r.id);
+        if(card) card.classList.remove('checked');
+      });
+    }
+    selectedRules.add(ruleId);
+  }
+
+  // Update card appearance
+  const card=document.getElementById('card-'+ruleId);
+  if(card) card.classList.toggle('checked', selectedRules.has(ruleId));
+
+  renderActiveRuleset();
+  updateExportSummary();
+}
+
+// =========================================================================
+// ACTIVE RULESET UI
+// =========================================================================
+function renderActiveRuleset(){
+  const list=document.getElementById('active-rule-list');
+
+  // Get selected rules in execution order
+  const active=RULE_DEFS
+    .filter(r=>selectedRules.has(r.id))
+    .sort((a,b)=>{
+      const po=PHASE_ORDER[a.phase]-PHASE_ORDER[b.phase];
+      return po!==0 ? po : a.execOrder-b.execOrder;
+    });
+
+  if(!active.length){
+    list.innerHTML='<div class="no-rules-msg">No rules selected — simulation will run with no interlocking enforcement.</div>';
+    return;
+  }
+
+  list.innerHTML=active.map((r,i)=>`
+    <div class="active-rule-item">
+      <div class="active-rule-seq">${i+1}</div>
+      <div class="active-rule-id">${esc(r.id)}</div>
+      <div class="active-rule-name">${esc(r.name)}</div>
+      <div style="margin-left:auto;font-size:10px;color:#aaa">${esc(r.phase)}</div>
+    </div>`).join('');
+}
+
+// =========================================================================
+// RESOURCE MAP TABLE
+// =========================================================================
+function renderResourceMap(){
+  const tbody=document.getElementById('rm-tbody');
+  if(!Object.keys(resourceMap).length){
+    tbody.innerHTML='<tr><td colspan="5" style="color:#aaa;text-align:center;padding:16px">No routes loaded.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML=routes.map(route=>{
+    const rid=route.route_id;
+    const rm=resourceMap[rid];
+    if(!rm) return '';
+
+    // Track sections summary
+    const trackIds=[...new Set(rm.track_sections.map(s=>s.track_id))];
+    const secHtml=trackIds.map(tid=>{
+      const secs=rm.track_sections.filter(s=>s.track_id===tid);
+      const minCh=Math.min(...secs.map(s=>s.from_ch));
+      const maxCh=Math.max(...secs.map(s=>s.to_ch));
+      return `<span class="rm-tag tag-track">${esc(tid)} ch${minCh.toFixed(0)}–${maxCh.toFixed(0)}</span>`;
+    }).join('');
+
+    // Points summary
+    const ptHtml=rm.points.length
+      ? rm.points.map(p=>`<span class="rm-tag tag-point">${esc(p.turnout_id)} (${p.required_position})</span>`).join('')
+      : '<span class="rm-tag tag-none">none</span>';
+
+    // Overlap summary
+    const ovHtml=rm.overlap
+      ? `<span class="rm-tag tag-overlap">${esc(rm.overlap.track_id)} ch${rm.overlap.from_ch.toFixed(0)}→${rm.overlap.to_ch.toFixed(0)}</span>`
+      : '<span class="rm-tag tag-none">none</span>';
+
+    return `<tr>
+      <td style="font-family:monospace;font-size:11px;font-weight:600">${esc(rid)}</td>
+      <td>${esc(route.direction)}</td>
+      <td>${secHtml}</td>
+      <td>${ptHtml}</td>
+      <td>${ovHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+// =========================================================================
+// EXPORT
+// =========================================================================
+function updateExportSummary(){
+  const active=RULE_DEFS.filter(r=>selectedRules.has(r.id));
+  const routeCount=Object.keys(resourceMap).length;
+  const turnoutCount=Object.keys(turnoutRegistry).length;
+  document.getElementById('export-summary').innerHTML=
+    `<strong>${active.length}</strong> rules active &nbsp;·&nbsp; `+
+    `<strong>${routeCount}</strong> routes in resource map &nbsp;·&nbsp; `+
+    `<strong>${turnoutCount}</strong> turnouts registered`;
+}
+
+// ── Developer note toggle ─────────────────────────────────────────────────
+function toggleDevNote(){
+  const body=document.getElementById('dev-note-body');
+  const chev=document.getElementById('dev-note-chevron');
+  const open=body.style.display==='none';
+  body.style.display=open?'block':'none';
+  chev.className=open?'ti ti-chevron-up':'ti ti-chevron-down';
+  chev.style.cssText='margin-left:auto;font-size:13px;color:#aaa';
+}
+
+// =========================================================================
+// EXPORT
+// =========================================================================
+function buildConfigObject(){
+  // Build ordered active rule list
+  const activeRules=RULE_DEFS
+    .filter(r=>selectedRules.has(r.id))
+    .sort((a,b)=>{
+      const po=PHASE_ORDER[a.phase]-PHASE_ORDER[b.phase];
+      return po!==0 ? po : a.execOrder-b.execOrder;
+    })
+    .map(r=>r.id);
+
+  return {
+    version: '1.0',
+    ruleset_name: (document.getElementById('ruleset-name').value||'').trim()||'Unnamed Ruleset',
+    active_rules: activeRules,
+    resource_map: resourceMap,
+    turnout_registry: turnoutRegistry
+  };
+}
+
+function exportConfig(){
+  if(!Object.keys(resourceMap).length){
+    alert('No resource map — load all three input files first.');
+    return;
+  }
+
+  const config=buildConfigObject();
+  const json=JSON.stringify(config,null,2);
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+  a.download='interlocking_config.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('Exported interlocking_config.json — '+config.active_rules.length+' rules, '+Object.keys(resourceMap).length+' routes');
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// SHELL BRIDGE (M6) — added 09/09/2026 for the integrated shell
+// (claude/shell_architecture_09092026.md). Appended after the module's own
+// script; does NOT modify any function above (buildConfigObject() was
+// factored out of exportConfig() in the block above so both the real export
+// and this bridge can build the same object without duplicating logic —
+// exportConfig()'s own behaviour is unchanged, it just calls the shared
+// helper now instead of building the object inline).
+//
+// Sync policy for M6 (confirmed 09/09/2026): output is sent to the shell
+// continuously — whenever a rule is toggled or the ruleset name changes,
+// not only when the user clicks Export. This is cheap (buildConfigObject()
+// is pure, no side effects) and means STATE.interlockingConfig stays
+// current even if the user never clicks Export explicitly.
+//
+// Input: on the shell's one-time STATE_UPDATE, if trackLayout + routes +
+// routeSections are ALL present in STATE, pre-fill and run the same
+// "all files loaded" completion path markLoaded() uses. If only some are
+// present (e.g. M3 hasn't been visited yet), nothing is pre-filled and the
+// module falls back to manual upload for whichever files are missing —
+// consistent with "manual upload always available to fill gaps."
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if (window.parent === window) return; // standalone mode — bridge inactive
+
+  function sendOutput(){
+    if (!Object.keys(resourceMap).length) return; // nothing to send yet
+    window.parent.postMessage({ type:'MODULE_OUTPUT', module:'M6', payload: buildConfigObject() }, '*');
+  }
+
+  // Module → shell: rule toggles and ruleset-name edits.
+  const _origToggleRule = toggleRule;
+  toggleRule = function(ruleId){
+    _origToggleRule(ruleId);
+    sendOutput();
+  };
+  document.getElementById('ruleset-name').addEventListener('input', sendOutput);
+
+  // Also sync once resource-map building completes (markLoaded's "all
+  // loaded" branch), whether that came from manual upload or STATE_UPDATE.
+  const _origMarkLoaded = markLoaded;
+  markLoaded = function(key,msg){
+    _origMarkLoaded(key,msg);
+    if (Object.values(LOADED).every(v=>v)) sendOutput();
+  };
+
+  // Shell → module: pre-fill from STATE.trackLayout / STATE.routes /
+  // STATE.routeSections if all three are present.
+  function applyFromState(payload){
+    if (!payload) return;
+    const hasAll = payload.trackLayout && payload.routes && payload.routeSections;
+    if (!hasAll) return; // wait for manual upload of whichever is missing
+
+    layout = payload.trackLayout;
+    routes = payload.routes.map(r=>({
+      route_id:T(r.route_id), from_signal:T(r.from_signal),
+      from_ch:parseFloat(r.from_ch ?? r.from_chainage_m),
+      to_signal:T(r.to_signal), to_ch:parseFloat(r.to_ch ?? r.to_chainage_m),
+      direction:T(r.direction), track_id:T(r.track_id)
+    })).filter(r=>r.route_id);
+    sections = payload.routeSections.map(r=>({
+      route_id:T(r.route_id), seq:parseInt(r.section_seq),
+      track_id:T(r.track_id),
+      from_ch:parseFloat(r.from_ch ?? r.from_chainage_m),
+      to_ch:parseFloat(r.to_ch ?? r.to_chainage_m),
+      dist_m:parseFloat(r.distance_m)
+    })).filter(s=>s.route_id);
+
+    LOADED.layout = true; LOADED.routes = true; LOADED.sections = true;
+    document.getElementById('uz-layout').classList.add('loaded');
+    document.getElementById('uz-layout').innerHTML = '<i class="ti ti-check"></i> track_layout.json (from Module 1)';
+    document.getElementById('uz-routes').classList.add('loaded');
+    document.getElementById('uz-routes').innerHTML = '<i class="ti ti-check"></i> routes.csv (from Module 3) — '+routes.length+' routes';
+    document.getElementById('uz-sections').classList.add('loaded');
+    document.getElementById('uz-sections').innerHTML = '<i class="ti ti-check"></i> route_sections.csv (from Module 3) — '+sections.length+' sections';
+
+    document.getElementById('load-status').innerHTML =
+      '<span style="color:#3B6D11"><i class="ti ti-check"></i> All files loaded — building resource map.</span>';
+    buildResourceMap();
+    renderRuleLibrary();
+    renderActiveRuleset();
+    renderResourceMap();
+    updateExportSummary();
+    document.getElementById('rules-panel').style.display='block';
+    document.getElementById('active-panel').style.display='block';
+    document.getElementById('resmap-panel').style.display='block';
+    document.getElementById('export-panel').style.display='block';
+    sendOutput();
+  }
+
+  window.addEventListener('message', function(ev){
+    if (ev.source !== window.parent) return; // ignore anything not from the shell
+    const msg = ev.data;
+    if (!msg) return;
+    if (msg.type === 'STATE_UPDATE' && msg.payload) {
+      applyFromState(msg.payload);
+    }
+    if (msg.type === 'REQUEST_SYNC') {
+      sendOutput();
+    }
+    if (msg.type === 'REQUEST_RESIZE') {
+      requestAnimationFrame(()=>requestAnimationFrame(reportHeight));
+    }
+  });
+
+  // Tell the shell this module's bridge is attached and ready to receive
+  // STATE_UPDATE (the shell sends its one-time auto-fill in response).
+  window.parent.postMessage({ type:'MODULE_READY', module:'M6' }, '*');
+
+  // ── Width normalization (09/09/2026) ──────────────────────────────────
+  const styleOverride = document.createElement('style');
+  styleOverride.textContent = '.app{max-width:1000px}';
+  document.head.appendChild(styleOverride);
+
+  // ── Auto-height reporting (09/09/2026) ────────────────────────────────
+  function reportHeight(){
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M6', height: document.documentElement.scrollHeight }, '*');
+  }
+  new ResizeObserver(reportHeight).observe(document.documentElement);
+  reportHeight();
+})();
+</script>
+</body>
+</html>

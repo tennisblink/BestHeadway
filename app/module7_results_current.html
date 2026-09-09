@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Module 7 — Results & Visualization</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;font-size:14px;background:var(--color-background-tertiary,#f5f5f3);color:var(--color-text-primary,#1a1a1a);min-height:100vh}
+.app{max-width:1100px;margin:0 auto;padding:16px}
+.hdr{background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.hdr-icon{width:40px;height:40px;background:#E6F1FB;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#185FA5;font-size:20px;flex-shrink:0}
+.hdr h1{font-size:16px;font-weight:500}
+.hdr p{font-size:12px;color:#666;margin-top:2px}
+.panel{background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:20px;margin-bottom:14px}
+.sec-title{font-size:13px;font-weight:500;color:#666;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.info-box{border-radius:8px;padding:11px;font-size:12px;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start;line-height:1.6}
+.ib{background:#E6F1FB;color:#185FA5}
+.ig{background:#EAF3DE;color:#3B6D11}
+.ia{background:#FAEEDA;color:#854F0B}
+.upload-zone{border:1px dashed rgba(0,0,0,.3);border-radius:8px;padding:20px;text-align:center;cursor:pointer;margin-bottom:12px;color:#666;font-size:13px;transition:background .15s}
+.upload-zone:hover,.upload-zone.over{background:#E6F1FB;border-color:#185FA5}
+.upload-zone.loaded{background:#EAF3DE;border-color:#3B6D11;color:#3B6D11}
+/* Viz tabs */
+.viz-tabs{display:flex;gap:4px;background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:6px;margin-bottom:14px;flex-wrap:wrap}
+.viz-tab{flex:1;min-width:120px;padding:8px 4px;border:none;background:none;border-radius:8px;font-size:13px;cursor:pointer;color:#666;display:flex;align-items:center;justify-content:center;gap:5px}
+.viz-tab.active{background:#E6F1FB;color:#185FA5;font-weight:500}
+.viz-panel{display:none}
+.viz-panel.active{display:block}
+/* Chart containers */
+.chart-wrap{position:relative;width:100%;height:480px;margin-bottom:8px}
+.chart-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.ctrl-label{font-size:12px;color:#666}
+.ctrl-select{padding:5px 10px;border:0.5px solid rgba(0,0,0,.25);border-radius:6px;font-size:12px;background:var(--color-background-primary,#fff);color:var(--color-text-primary,#1a1a1a)}
+.btn{padding:7px 14px;border:0.5px solid rgba(0,0,0,.25);border-radius:8px;background:#fff;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:5px;color:var(--color-text-primary,#1a1a1a)}
+.btn:hover{background:var(--color-background-secondary,#f5f5f3)}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn-primary:hover{background:#0C447C}
+/* Summary stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.stat-card{background:var(--color-background-secondary,#f5f5f3);border-radius:8px;padding:12px}
+.stat-card .lbl{font-size:11px;color:#666;margin-bottom:4px}
+.stat-card .val{font-size:20px;font-weight:500}
+.stat-card .unit{font-size:11px;color:#666;margin-top:2px}
+.stat-card.il{background:#FAEEDA}
+.stat-card.il .lbl{color:#854F0B}
+.stat-card.il .val{color:#854F0B}
+/* Headway chart */
+.hw-nodata{color:#aaa;font-size:12px;padding:20px 0;text-align:center;font-style:italic}
+.ctrl-checkbox{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#666;cursor:pointer;padding:4px 8px;border:0.5px solid rgba(0,0,0,.2);border-radius:6px;background:#fff;user-select:none}
+.ctrl-checkbox input{accent-color:#185FA5}
+.legend-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:3px 8px;border-radius:6px;border:0.5px solid transparent}
+.legend-item:hover{background:var(--color-background-secondary,#f5f5f3);border-color:rgba(0,0,0,.1)}
+.legend-item.muted{opacity:0.35}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div class="hdr-icon"><i class="ti ti-chart-line"></i></div>
+  <div>
+    <h1>Module 7 — Results &amp; Visualization</h1>
+    <p>Inputs: simulation_log.csv (Module 5) · track_layout.json (Module 1, optional — enables headway reference points). Each visualization is an independent function.</p>
+  </div>
+</div>
+
+<!-- LOAD -->
+<div class="panel">
+  <div class="sec-title"><i class="ti ti-file-import"></i> Load files</div>
+  <div class="upload-zone" id="uz-log" onclick="document.getElementById('inp-log').click()"
+       ondragover="event.preventDefault();this.classList.add('over')"
+       ondragleave="this.classList.remove('over')"
+       ondrop="handleDrop(event,'log')">
+    <i class="ti ti-table-import" style="font-size:24px;display:block;margin-bottom:6px"></i>
+    <strong>simulation_log.csv</strong> — produced by Module 5<br>
+    <span style="font-size:11px">Drag and drop or click to upload</span>
+    <input type="file" id="inp-log" accept=".csv" style="display:none" onchange="loadLog(event)">
+  </div>
+  <div class="upload-zone" id="uz-layout" onclick="document.getElementById('inp-layout').click()"
+       ondragover="event.preventDefault();this.classList.add('over')"
+       ondragleave="this.classList.remove('over')"
+       ondrop="handleDrop(event,'layout')"
+       style="border-color:rgba(133,79,11,.3);background:rgba(250,238,218,.2);margin-bottom:0">
+    <i class="ti ti-topology-star-3" style="font-size:20px;display:block;margin-bottom:4px;opacity:.5"></i>
+    <strong>track_layout.json</strong> <span style="font-size:11px;color:#854F0B;background:#FAEEDA;padding:1px 6px;border-radius:4px;margin-left:4px">optional</span><br>
+    <span style="font-size:11px">Enables headway reference points (platforms &amp; crossovers)</span>
+    <input type="file" id="inp-layout" accept=".json" style="display:none" onchange="loadLayout(event)">
+  </div>
+  <button class="btn btn-primary" id="btn-analyse" onclick="runAnalysis()" disabled style="width:100%;justify-content:center;opacity:.5;cursor:default">
+    <i class="ti ti-chart-histogram"></i> Analyse
+  </button>
+</div>
+
+<!-- SUMMARY -->
+<div id="summary-panel" style="display:none">
+  <div class="stats-grid" id="stats-grid"></div>
+
+  <!-- VIZ TABS -->
+  <div class="viz-tabs">
+    <button class="viz-tab active" id="vtab-td" onclick="switchViz('td')">
+      <i class="ti ti-chart-line"></i> Time–Distance
+    </button>
+    <button class="viz-tab" id="vtab-sd" onclick="switchViz('sd')">
+      <i class="ti ti-chart-area"></i> Speed–Distance
+    </button>
+    <button class="viz-tab" id="vtab-hw" onclick="switchViz('hw')">
+      <i class="ti ti-clock-bolt"></i> Headway
+    </button>
+  </div>
+
+  <!-- TIME-DISTANCE VIZ -->
+  <div class="viz-panel active" id="vpanel-td">
+    <div class="panel">
+      <div class="sec-title"><i class="ti ti-chart-line"></i> Time–Distance Diagram</div>
+      <div class="info-box ib">
+        <i class="ti ti-info-circle"></i>
+        <div>X-axis: simulation time · Y-axis: chainage (metres) · Each line = one train · Up trains slope upward, down trains slope downward · Flat segments = dwelling or waiting · Click legend to show/hide individual trains.</div>
+      </div>
+      <div class="chart-controls">
+        <span class="ctrl-label">Filter status:</span>
+        <select class="ctrl-select" id="td-status-filter" onchange="renderTDChart()">
+          <option value="all">All rows</option>
+          <option value="running">Running only</option>
+          <option value="running+dwelling">Running + Dwelling</option>
+        </select>
+        <span class="ctrl-label" style="margin-left:8px">Downsample:</span>
+        <select class="ctrl-select" id="td-downsample" onchange="renderTDChart()">
+          <option value="1">Every tick</option>
+          <option value="5">Every 5 ticks</option>
+          <option value="10" selected>Every 10 ticks</option>
+          <option value="30">Every 30 ticks</option>
+          <option value="60">Every 60 ticks</option>
+        </select>
+        <label class="ctrl-checkbox" id="il-overlay-wrap" style="display:none">
+          <input type="checkbox" id="td-il-overlay" checked onchange="renderTDChart()">
+          Show IL waiting
+        </label>
+        <button class="btn" onclick="exportChart('td-chart','time_distance_diagram')"><i class="ti ti-download"></i> Export PNG</button>
+      </div>
+      <div class="legend-grid" id="td-legend"></div>
+      <div class="chart-wrap"><canvas id="td-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- SPEED-DISTANCE VIZ -->
+  <div class="viz-panel" id="vpanel-sd">
+    <div class="panel">
+      <div class="sec-title"><i class="ti ti-chart-area"></i> Speed–Distance Diagram</div>
+      <div class="info-box ib">
+        <i class="ti ti-info-circle"></i>
+        <div>X-axis: distance travelled (metres, cumulative per train) · Y-axis: speed (km/h) · Each line = one train · Using cumulative displacement so up and down trains are both plotted left-to-right · Click legend to show/hide individual trains.</div>
+      </div>
+      <div class="chart-controls">
+        <span class="ctrl-label">Downsample:</span>
+        <select class="ctrl-select" id="sd-downsample" onchange="renderSDChart()">
+          <option value="1">Every tick</option>
+          <option value="5">Every 5 ticks</option>
+          <option value="10" selected>Every 10 ticks</option>
+          <option value="30">Every 30 ticks</option>
+          <option value="60">Every 60 ticks</option>
+        </select>
+        <button class="btn" onclick="exportChart('sd-chart','speed_distance_diagram')"><i class="ti ti-download"></i> Export PNG</button>
+      </div>
+      <div class="legend-grid" id="sd-legend"></div>
+      <div class="chart-wrap"><canvas id="sd-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- HEADWAY VIZ -->
+  <div class="viz-panel" id="vpanel-hw">
+    <div class="panel">
+      <div class="sec-title"><i class="ti ti-clock-bolt"></i> Headway Analysis</div>
+      <div class="info-box ib">
+        <i class="ti ti-info-circle"></i>
+        <div>Time gap between consecutive trains departing from each route's entry signal. Reference points are the unique route IDs found in the log — select one to see headway between successive trains. X-axis: departure time of the later train · Y-axis: headway in seconds.</div>
+      </div>
+      <div id="hw-controls" style="display:none">
+        <div class="chart-controls">
+          <span class="ctrl-label">Route (entry signal):</span>
+          <select class="ctrl-select" id="hw-refpoint" onchange="renderHWChart()" style="min-width:220px"></select>
+          <span class="ctrl-label" style="margin-left:8px">Min headway line:</span>
+          <input type="number" id="hw-minline" value="120" min="0" step="10"
+            style="width:70px;padding:5px 8px;border:0.5px solid rgba(0,0,0,.25);border-radius:6px;font-size:12px"
+            onchange="renderHWChart()">
+          <span class="ctrl-label">s</span>
+          <button class="btn" onclick="exportChart('hw-chart','headway_analysis')"><i class="ti ti-download"></i> Export PNG</button>
+        </div>
+        <div id="hw-summary" style="font-size:12px;color:#666;margin-bottom:10px"></div>
+        <div class="chart-wrap"><canvas id="hw-chart"></canvas></div>
+      </div>
+      <div id="hw-no-crossings" class="hw-nodata" style="display:none">No departures found for this route in the loaded log.</div>
+    </div>
+  </div>
+
+</div><!-- summary-panel -->
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// MODULE 7 — RESULTS & VISUALIZATION  v2
+//
+// Architecture: each visualization is an independent function.
+// Adding a new chart = add tab button + viz-panel in HTML + render function.
+//
+// INPUTS:
+//   simulation_log.csv  — from Module 5 (required)
+//   track_layout.json   — from Module 1 (optional, enables headway ref points)
+//
+// VISUALIZATION FUNCTIONS:
+//   renderTDChart()  — Time-Distance diagram (+ IL waiting overlay)
+//   renderSDChart()  — Speed-Distance diagram
+//   renderHWChart()  — Headway analysis (requires layout)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Data store ──────────────────────────────────────────────────────────────
+let logData    = [];   // all parsed rows from simulation_log.csv
+let trainIds   = [];   // unique train IDs in order of first appearance
+let trainMuted = {};   // train_id → bool (legend show/hide)
+let layoutData = null; // parsed track_layout.json
+let refPoints  = [];   // auto-generated headway reference points
+let ilPresent  = false;// whether log contains interlocking columns
+
+// Chart instances
+let tdChartInst = null;
+let sdChartInst = null;
+let hwChartInst = null;
+
+// Colour palette — consistent across all charts
+const PALETTE = [
+  '#185FA5','#3B6D11','#854F0B','#993556','#533AB7',
+  '#0F6E56','#993C1D','#185480','#5B8C2A','#A0522D',
+  '#6A0572','#107070','#C0392B','#2471A3','#1E8449'
+];
+
+// The original module never had this helper — it used file.name directly,
+// unescaped, inline. When onLogReady()/onLayoutReady() were factored out
+// (so the bridge could call the same "file loaded" completion logic as the
+// real upload path), esc() calls were added around the label for safety
+// but the helper itself was never defined, so calling either function threw
+// "esc is not defined" — every time, both from manual upload and from the
+// bridge. Fixed by actually defining it (same implementation as M1/M4).
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+function trainColor(trainId){
+  const idx=trainIds.indexOf(trainId);
+  return PALETTE[idx%PALETTE.length];
+}
+
+// ── File loading ─────────────────────────────────────────────────────────────
+function handleDrop(e,key){
+  e.preventDefault();
+  document.getElementById('uz-'+(key||'log')).classList.remove('over');
+  const f=e.dataTransfer.files[0];
+  if(!f) return;
+  if(key==='layout') parseLayout(f); else parseLogFile(f);
+}
+function loadLog(e){  const f=e.target.files[0]; if(f) parseLogFile(f); }
+function loadLayout(e){ const f=e.target.files[0]; if(f) parseLayout(f); }
+
+// ── Analyse button (09/09/2026, user request) ────────────────────────────
+// Originally the module ran the full analysis (charts, stats) the instant
+// a file finished loading — for manual upload that's a fine "I just did a
+// thing" trigger, but once the shell can also hand this module data
+// automatically via STATE_UPDATE, an instant silent trigger felt wrong: no
+// clear moment where the user decided "now show me the results", and (per
+// the auto-fill timing fix elsewhere) that STATE_UPDATE can now arrive more
+// than once as the user revisits this step, which would otherwise re-run
+// the whole analysis — chart rebuild included — on every visit. So both
+// paths (manual upload and shell auto-fill) now only stage the parsed data
+// and mark the upload zone as ready; the actual analysis (onLogReady/
+// onLayoutReady, which builds the charts) only runs when the user clicks
+// the explicit "Analyse" button below the upload zones.
+let pendingLog = null, pendingLogLabel = '';
+let pendingLayout = null, pendingLayoutLabel = '';
+
+function stageLog(rows, label){
+  pendingLog = rows;
+  pendingLogLabel = label;
+  const el = document.getElementById('uz-log');
+  el.classList.add('loaded');
+  el.innerHTML = `<i class="ti ti-check" style="font-size:20px;display:block;margin-bottom:4px"></i>`+
+    `<strong>${esc(label)}</strong> — ${rows.length.toLocaleString()} rows ready · click Analyse`;
+  updateAnalyseButton();
+}
+
+function stageLayout(data, label){
+  pendingLayout = data;
+  pendingLayoutLabel = label;
+  const el = document.getElementById('uz-layout');
+  el.classList.add('loaded');
+  el.innerHTML = `<i class="ti ti-check" style="font-size:20px;display:block;margin-bottom:4px"></i>`+
+    `<strong>${esc(label)}</strong> — ready, included on next Analyse`;
+  updateAnalyseButton();
+}
+
+function updateAnalyseButton(){
+  const btn = document.getElementById('btn-analyse');
+  if(!btn) return;
+  const ready = !!pendingLog;
+  btn.disabled = !ready;
+  btn.style.opacity = ready ? '1' : '.5';
+  btn.style.cursor = ready ? 'pointer' : 'default';
+}
+
+function runAnalysis(){
+  if(!pendingLog) return;
+  logData = pendingLog;
+  onLogReady(pendingLogLabel);
+  if(pendingLayout){
+    layoutData = pendingLayout;
+    onLayoutReady(pendingLayoutLabel);
+  }
+}
+
+function parseLogFile(file){
+  Papa.parse(file,{
+    header:true, skipEmptyLines:true, dynamicTyping:true,
+    complete(res){
+      stageLog(res.data.filter(r=>r.train_id), file.name);
+    }
+  });
+}
+
+function onLogReady(sourceLabel){
+  // Ordered unique train IDs
+  const seen=new Set();
+  trainIds=[];
+  logData.forEach(r=>{ if(!seen.has(r.train_id)){seen.add(r.train_id);trainIds.push(r.train_id);} });
+  trainMuted={};
+  trainIds.forEach(id=>{ trainMuted[id]=false; });
+
+  // Detect interlocking columns
+  ilPresent=logData.some(r=>r.il_waiting_for!=null&&String(r.il_waiting_for).trim()!=='');
+  const ilWrap=document.getElementById('il-overlay-wrap');
+  if(ilWrap) ilWrap.style.display=ilPresent?'':'none';
+
+  document.getElementById('uz-log').classList.add('loaded');
+  document.getElementById('uz-log').innerHTML=
+    `<i class="ti ti-check" style="font-size:20px;display:block;margin-bottom:4px"></i>
+     <strong>${esc(sourceLabel)}</strong> loaded — ${logData.length.toLocaleString()} rows · ${trainIds.length} trains`+
+    (ilPresent?' · <span style="color:#854F0B;font-size:11px">Interlocking data present</span>':'');
+
+  renderSummaryStats();
+  document.getElementById('summary-panel').style.display='block';
+  renderTDChart();
+  renderSDChart();
+  buildRouteRefPoints();
+  renderHWChart();
+  toast('Log loaded — '+logData.length.toLocaleString()+' rows');
+}
+
+function parseLayout(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      stageLayout(JSON.parse(ev.target.result), file.name);
+    }catch(err){ alert('Error loading layout: '+err.message); }
+  };
+  reader.readAsText(file);
+}
+
+function onLayoutReady(sourceLabel){
+  buildRefPoints();
+  document.getElementById('uz-layout').classList.add('loaded');
+  document.getElementById('uz-layout').innerHTML=
+    `<i class="ti ti-check" style="font-size:20px;display:block;margin-bottom:4px"></i>
+     <strong>${esc(sourceLabel)}</strong> — ${refPoints.length} layout reference points loaded`;
+  toast('Layout loaded — '+refPoints.length+' reference points');
+}
+
+// ── Reference point builder ──────────────────────────────────────────────────
+// Auto-generates headway measurement points from platforms and crossover turnouts
+function buildRefPoints(){
+  refPoints=[];
+  if(!layoutData) return;
+
+  // Platforms: midpoint chainage on the platform's track
+  (layoutData.platforms||[]).forEach(p=>{
+    const mid=((parseFloat(p.from_ch)||0)+(parseFloat(p.to_ch)||0))/2;
+    refPoints.push({
+      id: p.platform_id||p.name,
+      label: `${p.name||p.platform_id} (${p.track_id})`,
+      track_id: String(p.track_id||'').trim(),
+      chainage: mid,
+      type: 'platform'
+    });
+  });
+
+  // Crossovers: one point per turnout (A and B), on their mainline track
+  (layoutData.crossovers||[]).forEach(xo=>{
+    ['turnout_A','turnout_B'].forEach((key,ki)=>{
+      const tu=xo[key];
+      if(!tu||!tu.track_id) return;
+      const ch=parseFloat(tu.chainage)||0;
+      refPoints.push({
+        id: `${xo.crossover_id}-${ki===0?'A':'B'}`,
+        label: `${xo.name||xo.crossover_id} Turnout ${ki===0?'A':'B'} (${tu.track_id} ch${ch})`,
+        track_id: String(tu.track_id||'').trim(),
+        chainage: ch,
+        type: 'crossover'
+      });
+    });
+  });
+
+  // Populate headway dropdown
+  const sel=document.getElementById('hw-refpoint');
+  if(sel){
+    sel.innerHTML=refPoints.map((p,i)=>`<option value="${i}">${p.label}</option>`).join('');
+  }
+}
+
+// ── Summary statistics ────────────────────────────────────────────────────────
+function renderSummaryStats(){
+  const totalTicks=logData.length;
+  const simTimes=logData.map(r=>r.time).filter(Boolean);
+  const startTime=simTimes[0]||'—';
+  const endTime=simTimes[simTimes.length-1]||'—';
+
+  const totalDist=logData
+    .filter(r=>r.status==='running')
+    .reduce((acc,r)=>acc+Math.abs(parseFloat(r.displacement)||0),0);
+  const totalDistStr=totalDist>0?(totalDist/1000).toFixed(2):'—';
+
+  const speeds=logData.map(r=>parseFloat(r.speed)*3.6).filter(n=>!isNaN(n)&&n>0);
+  const maxSpeed=speeds.length?Math.max(...speeds).toFixed(1):'—';
+
+  let html=`
+    <div class="stat-card"><div class="lbl">Trains simulated</div><div class="val">${trainIds.length}</div><div class="unit">trains</div></div>
+    <div class="stat-card"><div class="lbl">Total log rows</div><div class="val">${totalTicks.toLocaleString()}</div><div class="unit">rows</div></div>
+    <div class="stat-card"><div class="lbl">Total distance covered</div><div class="val">${totalDistStr}</div><div class="unit">km (all trains)</div></div>
+    <div class="stat-card"><div class="lbl">Peak speed observed</div><div class="val">${maxSpeed}</div><div class="unit">km/h</div></div>`;
+
+  // Interlocking stats — only when IL data present
+  if(ilPresent){
+    // Estimate tick interval from first two consecutive rows of same train
+    let tickSec=0.2;
+    const firstTrain=trainIds[0];
+    const trainRows=logData.filter(r=>r.train_id===firstTrain&&r.status==='running');
+    if(trainRows.length>=2){
+      const dt=hmsToSec(trainRows[1].time)-hmsToSec(trainRows[0].time);
+      if(dt>0) tickSec=dt;
+    }
+
+    const waitingRows=logData.filter(r=>String(r.il_waiting_for||'').trim()!=='');
+    const totalWaitSec=(waitingRows.length*tickSec);
+
+    // Count distinct holds: transitions from non-waiting to waiting per train
+    let holds=0;
+    trainIds.forEach(id=>{
+      const rows=logData.filter(r=>r.train_id===id);
+      let wasWaiting=false;
+      rows.forEach(r=>{
+        const isWaiting=String(r.il_waiting_for||'').trim()!=='';
+        if(isWaiting&&!wasWaiting) holds++;
+        wasWaiting=isWaiting;
+      });
+    });
+
+    html+=`
+      <div class="stat-card il"><div class="lbl">Total IL waiting time</div><div class="val">${totalWaitSec.toFixed(0)}</div><div class="unit">seconds (all trains)</div></div>
+      <div class="stat-card il"><div class="lbl">Interlocking holds</div><div class="val">${holds}</div><div class="unit">distinct holds</div></div>`;
+  }
+
+  document.getElementById('stats-grid').innerHTML=html;
+}
+
+// ── Viz tab switching ─────────────────────────────────────────────────────────
+function switchViz(name){
+  document.querySelectorAll('.viz-tab').forEach(btn=>{
+    btn.classList.toggle('active',btn.id==='vtab-'+name);
+  });
+  document.querySelectorAll('.viz-panel').forEach(panel=>{
+    panel.classList.toggle('active',panel.id==='vpanel-'+name);
+  });
+}
+
+// ── Legend builder ────────────────────────────────────────────────────────────
+function buildLegend(containerId,onToggle){
+  const container=document.getElementById(containerId);
+  container.innerHTML='';
+  trainIds.forEach(id=>{
+    const item=document.createElement('div');
+    item.className='legend-item'+(trainMuted[id]?' muted':'');
+    item.innerHTML=`<span class="legend-dot" style="background:${trainColor(id)}"></span>${id}`;
+    item.onclick=()=>{ trainMuted[id]=!trainMuted[id]; onToggle(); };
+    container.appendChild(item);
+  });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function downsample(rows,step){
+  if(step<=1) return rows;
+  return rows.filter((_,i)=>i%step===0);
+}
+function groupByTrain(rows){
+  const groups={};
+  rows.forEach(r=>{ if(!groups[r.train_id])groups[r.train_id]=[]; groups[r.train_id].push(r); });
+  return groups;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VISUALIZATION 1 — TIME-DISTANCE DIAGRAM
+// X: simulation time (seconds) · Y: chainage (metres)
+// IL waiting overlay: red scatter points where train is held at signal
+// ═══════════════════════════════════════════════════════════════════════════
+function renderTDChart(){
+  const statusFilter=document.getElementById('td-status-filter').value;
+  const dsStep=parseInt(document.getElementById('td-downsample').value)||1;
+  const showIL=ilPresent&&document.getElementById('td-il-overlay')?.checked;
+
+  let filtered=logData;
+  if(statusFilter==='running')          filtered=logData.filter(r=>r.status==='running');
+  if(statusFilter==='running+dwelling') filtered=logData.filter(r=>r.status==='running'||r.status==='dwelling');
+
+  const byTrain=groupByTrain(filtered);
+  const allByTrain=groupByTrain(logData); // full log for IL overlay (unfiltered)
+
+  const datasets=[];
+
+  trainIds.forEach(id=>{
+    // Main line dataset
+    const rows=downsample(byTrain[id]||[],dsStep);
+    datasets.push({
+      label: id,
+      data:  rows.map(r=>({x:hmsToSec(r.time),y:parseFloat(r.chainage)})),
+      borderColor:  trainColor(id),
+      borderWidth:  1.5,
+      pointRadius:  0,
+      fill:         false,
+      tension:      0,
+      hidden:       trainMuted[id],
+      type:         'line'
+    });
+
+    // IL waiting scatter overlay — red dots where train is held
+    if(showIL){
+      const waitRows=(allByTrain[id]||[]).filter(r=>String(r.il_waiting_for||'').trim()!=='');
+      if(waitRows.length){
+        datasets.push({
+          label:           id+'_waiting',
+          data:            waitRows.map(r=>({x:hmsToSec(r.time),y:parseFloat(r.chainage)})),
+          type:            'scatter',
+          pointRadius:     3,
+          pointStyle:      'circle',
+          backgroundColor: 'rgba(163,45,45,0.7)',
+          borderColor:     'rgba(163,45,45,0)',
+          hidden:          trainMuted[id],
+          showInLegend:    false
+        });
+      }
+    }
+  });
+
+  buildLegend('td-legend',renderTDChart);
+  if(tdChartInst) tdChartInst.destroy();
+
+  tdChartInst=new Chart(document.getElementById('td-chart'),{
+    type:'line',
+    data:{datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false, parsing:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          filter: item=>!item.dataset.label?.endsWith('_waiting'),
+          callbacks:{
+            title: items=>secToHMS(items[0].parsed.x),
+            label: item =>`${item.dataset.label}: ${item.parsed.y.toFixed(0)} m`
+          }
+        }
+      },
+      scales:{
+        x:{type:'linear',title:{display:true,text:'Time',font:{size:11}},
+           ticks:{callback:v=>secToHMS(v),maxTicksLimit:12,font:{size:10}}},
+        y:{type:'linear',title:{display:true,text:'Chainage (m)',font:{size:11}},
+           ticks:{font:{size:10}}}
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VISUALIZATION 2 — SPEED-DISTANCE DIAGRAM
+// X: cumulative distance travelled (m) · Y: speed (km/h)
+// ═══════════════════════════════════════════════════════════════════════════
+function renderSDChart(){
+  const dsStep=parseInt(document.getElementById('sd-downsample').value)||1;
+  const filtered=logData.filter(r=>r.status==='running');
+  const byTrain=groupByTrain(filtered);
+
+  const datasets=trainIds.map(id=>{
+    const allRows=byTrain[id]||[];
+    let cumDist=0;
+    const withDist=allRows.map(r=>{
+      cumDist+=Math.abs(parseFloat(r.displacement)||0);
+      return {dist:cumDist,speed:parseFloat(r.speed)*3.6};
+    });
+    const sampled=withDist.filter((_,i)=>i%dsStep===0);
+    return{
+      label:id,
+      data:sampled.map(p=>({x:p.dist,y:p.speed})),
+      borderColor:trainColor(id),
+      borderWidth:1.5,pointRadius:0,fill:false,tension:0,hidden:trainMuted[id]
+    };
+  });
+
+  buildLegend('sd-legend',renderSDChart);
+  if(sdChartInst) sdChartInst.destroy();
+
+  sdChartInst=new Chart(document.getElementById('sd-chart'),{
+    type:'line',data:{datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,parsing:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          title:items=>`Distance travelled: ${items[0].parsed.x.toFixed(0)} m`,
+          label:item=>`${item.dataset.label}: ${item.parsed.y.toFixed(1)} km/h`
+        }}
+      },
+      scales:{
+        x:{type:'linear',title:{display:true,text:'Distance travelled (m)',font:{size:11}},ticks:{font:{size:10}}},
+        y:{type:'linear',title:{display:true,text:'Speed (km/h)',font:{size:11}},min:0,ticks:{font:{size:10}}}
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VISUALIZATION 3 — HEADWAY ANALYSIS
+// X: wall-clock time of the later train's passing (seconds)
+// Y: headway in seconds
+// One scatter point per consecutive train pair per reference point.
+// ═══════════════════════════════════════════════════════════════════════════
+// ── Route reference point builder ────────────────────────────────────────────
+// Extracts unique route IDs from the log — one reference point per route.
+// Called after log is parsed. No layout file needed.
+function buildRouteRefPoints(){
+  // Collect unique route IDs in order of first appearance across all trains
+  const seen=new Set();
+  const routeIds=[];
+  logData.forEach(r=>{
+    const rid=String(r.current_route_id||'').trim();
+    if(rid && !seen.has(rid)){ seen.add(rid); routeIds.push(rid); }
+  });
+
+  // Populate headway dropdown
+  const sel=document.getElementById('hw-refpoint');
+  if(sel){
+    sel.innerHTML=routeIds.map(id=>`<option value="${id}">${id}</option>`).join('');
+  }
+
+  // Show controls
+  const controls=document.getElementById('hw-controls');
+  if(controls) controls.style.display=routeIds.length?'block':'none';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VISUALIZATION 3 — HEADWAY ANALYSIS
+//
+// Departure = first running tick after a train transitions onto a new route.
+// Detects route transitions by scanning each train's rows for current_route_id
+// changes. The first tick of each new route_id (status='running') is the
+// departure from that route's entry signal.
+//
+// X: departure time of the later train (wall-clock, seconds)
+// Y: headway in seconds (gap between consecutive departures on same route)
+// Colour: later train's colour
+// ═══════════════════════════════════════════════════════════════════════════
+function renderHWChart(){
+  const controls   =document.getElementById('hw-controls');
+  const noCrossings=document.getElementById('hw-no-crossings');
+  if(!controls) return;
+
+  const sel=document.getElementById('hw-refpoint');
+  const selectedRoute=sel?.value||'';
+  if(!selectedRoute){ noCrossings.style.display='block'; return; }
+
+  noCrossings.style.display='none';
+  const minLineVal=parseFloat(document.getElementById('hw-minline').value)||120;
+
+  // ── Compute departure times per train for the selected route ─────────────
+  // For each train: scan rows for the transition where current_route_id
+  // changes TO selectedRoute with status='running'. Record that tick's time.
+  const departures=[]; // { train_id, timeSec }
+
+  trainIds.forEach(id=>{
+    const rows=logData.filter(r=>r.train_id===id);
+    let prevRouteId=null;
+    for(let i=0;i<rows.length;i++){
+      const r=rows[i];
+      const rid=String(r.current_route_id||'').trim();
+      const status=String(r.status||'').trim();
+      // Departure: first running tick where route transitions TO selectedRoute
+      if(rid===selectedRoute && status==='running' && prevRouteId!==selectedRoute){
+        departures.push({ train_id:id, timeSec:hmsToSec(r.time) });
+        break; // one departure per train per route
+      }
+      prevRouteId=rid;
+    }
+  });
+
+  if(departures.length<2){
+    noCrossings.style.display='block';
+    document.getElementById('hw-summary').innerHTML='';
+    if(hwChartInst){ hwChartInst.destroy(); hwChartInst=null; }
+    return;
+  }
+
+  // Sort by departure time
+  departures.sort((a,b)=>a.timeSec-b.timeSec);
+
+  // Compute headways between consecutive departures
+  const hwPoints=[];
+  for(let i=1;i<departures.length;i++){
+    const hw=departures[i].timeSec-departures[i-1].timeSec;
+    hwPoints.push({
+      x:      departures[i].timeSec,
+      y:      Math.round(hw*10)/10,
+      trainA: departures[i-1].train_id,
+      trainB: departures[i].train_id
+    });
+  }
+
+  // Summary stats
+  const hws=hwPoints.map(p=>p.y);
+  const minHW=Math.min(...hws), maxHW=Math.max(...hws);
+  const avgHW=hws.reduce((a,b)=>a+b,0)/hws.length;
+  const belowMin=hws.filter(h=>h<minLineVal).length;
+  document.getElementById('hw-summary').innerHTML=
+    `<strong>${departures.length}</strong> trains departed · `+
+    `Min headway: <strong>${minHW.toFixed(0)}s</strong> · `+
+    `Max: <strong>${maxHW.toFixed(0)}s</strong> · `+
+    `Avg: <strong>${avgHW.toFixed(0)}s</strong>`+
+    (belowMin>0
+      ? ` · <span style="color:#A32D2D"><strong>${belowMin}</strong> headway${belowMin>1?'s':''} below minimum</span>`
+      : ` · <span style="color:#3B6D11">All headways ≥ minimum</span>`);
+
+  // Build min headway reference line across time range
+  const timeMin=departures[0].timeSec-60;
+  const timeMax=departures[departures.length-1].timeSec+60;
+
+  const scatterData=hwPoints.map(p=>({x:p.x,y:p.y,trainA:p.trainA,trainB:p.trainB}));
+
+  const datasets=[
+    {
+      label:'Headway',
+      type:'scatter',
+      data:scatterData,
+      backgroundColor:scatterData.map(p=>trainColor(p.trainB)),
+      pointRadius:7,
+      pointHoverRadius:9,
+      borderColor:'rgba(0,0,0,0.15)',
+      borderWidth:1
+    },
+    {
+      label:`Min headway (${minLineVal}s)`,
+      type:'line',
+      data:[{x:timeMin,y:minLineVal},{x:timeMax,y:minLineVal}],
+      borderColor:'#A32D2D',
+      borderWidth:1.5,
+      borderDash:[6,4],
+      pointRadius:0,
+      fill:false,
+      tension:0
+    }
+  ];
+
+  if(hwChartInst) hwChartInst.destroy();
+
+  hwChartInst=new Chart(document.getElementById('hw-chart'),{
+    type:'scatter',
+    data:{datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,parsing:false,
+      plugins:{
+        legend:{
+          display:true,
+          labels:{
+            filter:item=>item.datasetIndex===1, // only min line in legend
+            font:{size:11}
+          }
+        },
+        tooltip:{
+          callbacks:{
+            title:items=>secToHMS(items[0].parsed.x),
+            label:item=>{
+              if(item.dataset.label?.startsWith('Min')) return item.dataset.label;
+              const p=item.raw;
+              return `${p.trainA} → ${p.trainB}: ${item.parsed.y.toFixed(0)}s`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          type:'linear',
+          title:{display:true,text:'Departure time of later train',font:{size:11}},
+          ticks:{callback:v=>secToHMS(v),maxTicksLimit:12,font:{size:10}}
+        },
+        y:{
+          type:'linear',
+          title:{display:true,text:'Headway (seconds)',font:{size:11}},
+          min:0,
+          ticks:{font:{size:10}}
+        }
+      }
+    }
+  });
+}
+
+// ── Chart export ──────────────────────────────────────────────────────────────
+function exportChart(canvasId,filename){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas){toast('Chart not found');return;}
+  const a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png');
+  a.download=filename+'.png';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('Exported '+filename+'.png');
+}
+
+// ── Time helpers ──────────────────────────────────────────────────────────────
+function hmsToSec(s){
+  if(!s) return 0;
+  const p=String(s).split(':').map(Number);
+  if(p.length===3) return p[0]*3600+p[1]*60+p[2];
+  if(p.length===2) return p[0]*3600+p[1]*60;
+  return 0;
+}
+function secToHMS(s){
+  s=((Math.round(s))%86400+86400)%86400;
+  return String(Math.floor(s/3600)).padStart(2,'0')+':'+
+         String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+
+         String(s%60).padStart(2,'0');
+}
+
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2500);
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// SHELL BRIDGE (M7) — added 09/09/2026 for the integrated shell
+// (claude/shell_architecture_09092026.md). Appended after the module's own
+// script; does NOT modify any function above (parseLogFile()/parseLayout()
+// were split into a small parse step + an onLogReady()/onLayoutReady()
+// completion step in the block above, purely so this bridge and a real file
+// upload can share the same completion logic without duplicating it — that
+// refactor doesn't change either function's behaviour for a real upload).
+//
+// M7 is the last step and nothing downstream depends on it, so this bridge
+// never sends MODULE_OUTPUT — it only receives.
+//
+// Input: on a shell STATE_UPDATE, if STATE.simulationLog is present, stage
+// it (skipping the CSV/Papa.parse step, since M5 already hands over parsed
+// rows) via the same stageLog()/stageLayout() functions a manual upload
+// uses — this does NOT auto-run the analysis; the user still clicks
+// Analyse (see the block above). Since this module never emits
+// MODULE_OUTPUT, the shell's auto-fill keeps re-sending STATE_UPDATE on
+// every visit to this step (see maybeSendAutoFill() in the shell) — that's
+// fine here since staging is idempotent, and re-staging keeps this module
+// current if the user re-ran the simulation since the last visit.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if (window.parent === window) return; // standalone mode — bridge inactive
+
+  function applySimulationLog(rows){
+    if (!rows || !rows.length) return;
+    stageLog(rows, 'simulation_log.csv (from Module 5)');
+  }
+
+  function applyTrackLayout(trackLayoutData){
+    if (!trackLayoutData) return;
+    stageLayout(trackLayoutData, 'track_layout.json (from Module 1)');
+  }
+
+  window.addEventListener('message', function(ev){
+    if (ev.source !== window.parent) return; // ignore anything not from the shell
+    const msg = ev.data;
+    if (!msg) return;
+    if (msg.type === 'STATE_UPDATE' && msg.payload) {
+      if (msg.payload.simulationLog) applySimulationLog(msg.payload.simulationLog.logRows || msg.payload.simulationLog);
+      if (msg.payload.trackLayout) applyTrackLayout(msg.payload.trackLayout);
+    }
+    // No REQUEST_SYNC handling — M7 has no output to send.
+    if (msg.type === 'REQUEST_RESIZE') {
+      requestAnimationFrame(()=>requestAnimationFrame(reportHeight));
+    }
+  });
+
+  // Tell the shell this module's bridge is attached and ready to receive
+  // STATE_UPDATE (the shell sends its one-time auto-fill in response).
+  window.parent.postMessage({ type:'MODULE_READY', module:'M7' }, '*');
+
+  // ── Width normalization (09/09/2026) ──────────────────────────────────
+  const styleOverride = document.createElement('style');
+  styleOverride.textContent = '.app{max-width:1000px}';
+  document.head.appendChild(styleOverride);
+
+  // ── Auto-height reporting (09/09/2026) ────────────────────────────────
+  function reportHeight(){
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M7', height: document.documentElement.scrollHeight }, '*');
+  }
+  new ResizeObserver(reportHeight).observe(document.documentElement);
+  reportHeight();
+})();
+</script>
+</body>
+</html>

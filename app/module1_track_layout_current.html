@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Module 1 — Track Layout Editor</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;font-size:14px;background:var(--color-background-tertiary,#f5f5f3);color:var(--color-text-primary,#1a1a1a);min-height:100vh}
+.app{max-width:1100px;margin:0 auto;padding:16px}
+
+/* ── Header ── */
+.hdr{background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.hdr-icon{width:40px;height:40px;background:#E6F1FB;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#185FA5;font-size:20px;flex-shrink:0}
+.hdr h1{font-size:16px;font-weight:500}
+.hdr p{font-size:12px;color:#666;margin-top:2px}
+
+/* ── Panels ── */
+.panel{background:var(--color-background-primary,#fff);border:0.5px solid rgba(0,0,0,.15);border-radius:12px;padding:20px;margin-bottom:14px}
+.sec-title{font-size:13px;font-weight:500;color:#666;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.step-label{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#185FA5;color:#fff;border-radius:50%;font-size:11px;font-weight:600;flex-shrink:0}
+
+/* ── Info boxes ── */
+.info-box{border-radius:8px;padding:11px;font-size:12px;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start;line-height:1.6}
+.ib{background:#E6F1FB;color:#185FA5}
+.ig{background:#EAF3DE;color:#3B6D11}
+.ia{background:#FAEEDA;color:#854F0B}
+.ir{background:#FCEBEB;color:#A32D2D}
+
+/* ── Buttons ── */
+.btn{padding:7px 14px;border:0.5px solid rgba(0,0,0,.25);border-radius:8px;background:#fff;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:6px;color:var(--color-text-primary,#1a1a1a);transition:background .1s}
+.btn:hover{background:var(--color-background-secondary,#f5f5f3)}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn-primary:hover{background:#0C447C}
+.btn-danger{background:#fff;color:#A32D2D;border-color:#A32D2D}
+.btn-danger:hover{background:#FCEBEB}
+.btn-sm{padding:4px 10px;font-size:11px;border-radius:6px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* ── Editable tables ── */
+.edit-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+.edit-tbl th{background:var(--color-background-secondary,#f5f5f3);padding:6px 8px;text-align:left;font-weight:500;color:#666;font-size:11px;border-bottom:0.5px solid rgba(0,0,0,.15);white-space:nowrap}
+.edit-tbl td{padding:3px 4px;border-bottom:0.5px solid rgba(0,0,0,.07);vertical-align:middle}
+.edit-tbl tr:last-child td{border-bottom:none}
+.edit-tbl tr:hover td{background:var(--color-background-secondary,#f5f5f3)}
+.edit-tbl input,.edit-tbl select{width:100%;padding:4px 7px;border:0.5px solid rgba(0,0,0,.2);border-radius:6px;font-size:12px;background:var(--color-background-primary,#fff);color:var(--color-text-primary,#1a1a1a);font-family:inherit}
+.edit-tbl input:focus,.edit-tbl select:focus{outline:none;border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.12)}
+.edit-tbl .del-btn{padding:3px 7px;font-size:11px;border-radius:5px;border:0.5px solid rgba(163,45,45,.3);background:#fff;color:#A32D2D;cursor:pointer;white-space:nowrap}
+.edit-tbl .del-btn:hover{background:#FCEBEB}
+
+/* ── Tabs ── */
+.tab-bar{display:flex;gap:4px;background:var(--color-background-secondary,#f5f5f3);border-radius:10px;padding:4px;margin-bottom:14px;flex-wrap:wrap}
+.tab-btn{padding:6px 14px;border:none;background:none;border-radius:7px;font-size:12px;cursor:pointer;color:#666;white-space:nowrap;transition:background .1s}
+.tab-btn.active{background:#fff;color:#185FA5;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── Track cards ── */
+.track-card{border:0.5px solid rgba(0,0,0,.12);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.track-card-hdr{background:var(--color-background-secondary,#f5f5f3);padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.track-card-hdr:hover{background:#e8e8e6}
+.track-card-body{padding:14px;border-top:0.5px solid rgba(0,0,0,.08)}
+.track-fields{display:grid;grid-template-columns:1fr 2fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px;align-items:end}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:11px;color:#666;font-weight:500}
+.fg input,.fg select{padding:5px 8px;border:0.5px solid rgba(0,0,0,.2);border-radius:7px;font-size:12px;font-family:inherit;background:var(--color-background-primary,#fff);color:var(--color-text-primary,#1a1a1a)}
+.fg input:focus,.fg select:focus{outline:none;border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.12)}
+.jump-section{margin-top:8px}
+.jump-toggle{font-size:11px;color:#185FA5;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:2px 0;background:none;border:none;font-family:inherit}
+.jump-toggle:hover{text-decoration:underline}
+.jump-table-wrap{margin-top:8px;display:none}
+
+/* ── Schematic canvas ── */
+.schematic-wrap{width:100%;overflow-x:auto;border:0.5px solid rgba(0,0,0,.12);border-radius:10px;background:#fff;position:relative}
+canvas#schematic{display:block;cursor:crosshair}
+.schematic-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:#666}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:12px;height:4px;border-radius:2px}
+
+/* ── Placeholder ── */
+.placeholder-panel{border:1px dashed rgba(0,0,0,.2);border-radius:10px;padding:20px;text-align:center;color:#aaa;font-size:12px}
+
+/* ── Crossover detail sub-panel ── */
+.xo-detail-row td{padding:0!important;border-bottom:0.5px solid rgba(0,0,0,.12)!important}
+.xo-detail-panel{display:none;background:var(--color-background-secondary,#f9f9f7);padding:12px 14px;border-top:0.5px solid rgba(0,0,0,.08)}
+.xo-detail-panel.open{display:block}
+.xo-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.xo-turnout-block{background:#fff;border:0.5px solid rgba(0,0,0,.12);border-radius:8px;padding:10px 12px}
+.xo-turnout-block h4{font-size:11px;font-weight:600;color:#185FA5;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+.xo-field-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:5px;align-items:end}
+.xo-field-row.full{grid-template-columns:1fr}
+.xo-jump-block{background:#fff;border:0.5px solid rgba(0,0,0,.12);border-radius:8px;padding:10px 12px}
+.xo-jump-block h4{font-size:11px;font-weight:600;color:#854F0B;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+.xo-jump-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;align-items:end}
+.xo-fg{display:flex;flex-direction:column;gap:2px}
+.xo-fg label{font-size:10px;color:#888;font-weight:500}
+.xo-fg input,.xo-fg select{padding:4px 7px;border:0.5px solid rgba(0,0,0,.2);border-radius:6px;font-size:11px;font-family:inherit;background:var(--color-background-primary,#fff);color:var(--color-text-primary,#1a1a1a);width:100%}
+.xo-fg input:focus,.xo-fg select:focus{outline:none;border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.12)}
+.xo-expand-btn{padding:2px 8px;font-size:10px;border-radius:5px;border:0.5px solid rgba(24,95,165,.4);background:#E6F1FB;color:#185FA5;cursor:pointer;white-space:nowrap}
+.xo-expand-btn:hover{background:#d0e4f7}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+
+/* ── Upload zone ── */
+.upload-zone{border:1px dashed rgba(0,0,0,.3);border-radius:8px;padding:14px;text-align:center;cursor:pointer;color:#666;font-size:12px;transition:background .15s}
+.upload-zone:hover,.upload-zone.over{background:#E6F1FB;border-color:#185FA5}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-icon"><i class="ti ti-topology-star-3"></i></div>
+  <div>
+    <h1>Module 1 — Track Layout Editor</h1>
+    <p>Define tracks, infrastructure, signals and export a track_layout.json for the route generator.</p>
+  </div>
+</div>
+
+<!-- LOAD EXISTING -->
+<div class="panel">
+  <div class="sec-title"><i class="ti ti-folder-open"></i> Load existing layout</div>
+  <div class="upload-zone" id="load-zone" onclick="document.getElementById('load-input').click()"
+       ondragover="event.preventDefault();this.classList.add('over')"
+       ondragleave="this.classList.remove('over')"
+       ondrop="handleLoadDrop(event)">
+    <i class="ti ti-file-import" style="font-size:20px;display:block;margin-bottom:4px"></i>
+    Drop or click to load a <strong>track_layout.json</strong> — or start fresh below
+    <input type="file" id="load-input" accept=".json" style="display:none" onchange="loadLayout(event)">
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STEP 1 — TRACKS
+═══════════════════════════════════════════════════════ -->
+<div class="panel">
+  <div class="sec-title">
+    <span class="step-label">1</span> Tracks
+  </div>
+  <div class="info-box ib">
+    <i class="ti ti-info-circle"></i>
+    <div>Each track has its own independent chainage system. Add chainage jumps where surveying discontinuities exist — these are co-located points with zero physical distance between them.</div>
+  </div>
+  <div id="track-list"></div>
+  <div class="btn-row">
+    <button class="btn" onclick="addTrack()"><i class="ti ti-plus"></i> Add track</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STEP 2 — INFRASTRUCTURE
+═══════════════════════════════════════════════════════ -->
+<div class="panel">
+  <div class="sec-title">
+    <span class="step-label">2</span> Infrastructure
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('platforms')"><i class="ti ti-building-arch"></i> Platforms</button>
+    <button class="tab-btn" onclick="showTab('gradients')"><i class="ti ti-trending-up"></i> Gradients</button>
+    <button class="tab-btn" onclick="showTab('speeds')"><i class="ti ti-speedboat"></i> Civil Speed Restrictions</button>
+    <button class="tab-btn" onclick="showTab('crossovers')"><i class="ti ti-arrows-cross"></i> Crossovers</button>
+    <button class="tab-btn" onclick="showTab('diamonds')"><i class="ti ti-diamond"></i> Diamonds</button>
+  </div>
+
+  <!-- PLATFORMS -->
+  <div class="tab-panel active" id="tab-platforms">
+    <div style="overflow-x:auto">
+      <table class="edit-tbl" id="tbl-platforms">
+        <thead><tr>
+          <th>Platform ID</th><th>Name</th><th>Track</th>
+          <th>From CH (m)</th><th>To CH (m)</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody id="tbody-platforms"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-sm" onclick="addRow('platforms')"><i class="ti ti-plus"></i> Add platform</button>
+  </div>
+
+  <!-- GRADIENTS -->
+  <div class="tab-panel" id="tab-gradients">
+    <div style="overflow-x:auto">
+      <table class="edit-tbl" id="tbl-gradients">
+        <thead><tr>
+          <th>Track</th><th>From CH (m)</th><th>To CH (m)</th>
+          <th>Gradient (‰)</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody id="tbody-gradients"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-sm" onclick="addRow('gradients')"><i class="ti ti-plus"></i> Add gradient</button>
+  </div>
+
+  <!-- CIVIL SPEED RESTRICTIONS -->
+  <div class="tab-panel" id="tab-speeds">
+    <div style="overflow-x:auto">
+      <table class="edit-tbl" id="tbl-speeds">
+        <thead><tr>
+          <th>Track</th><th>From CH (m)</th><th>To CH (m)</th>
+          <th>Speed Limit (km/h)</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody id="tbody-speeds"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-sm" onclick="addRow('speeds')"><i class="ti ti-plus"></i> Add restriction</button>
+  </div>
+
+  <!-- CROSSOVERS -->
+  <div class="tab-panel" id="tab-crossovers">
+    <div class="info-box ib" style="margin-bottom:10px">
+      <i class="ti ti-info-circle"></i>
+      <div>Each crossover connects two turnouts on different tracks. Both mainline and crossing sides of the same turnout share the same chainage system. A chainage jump between the two turnouts captures the surveying discontinuity between the two mainline chainage systems. Expand each row to enter turnout geometry and the crossing chainage jump.</div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="edit-tbl" id="tbl-crossovers">
+        <thead><tr>
+          <th>Crossover ID</th><th>Name</th>
+          <th>Turnout A — Track</th><th>Turnout A — CH (m)</th>
+          <th>Turnout B — Track</th><th>Turnout B — CH (m)</th>
+          <th>Speed Limit (km/h)</th><th></th>
+        </tr></thead>
+        <tbody id="tbody-crossovers"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-sm" onclick="addRow('crossovers')"><i class="ti ti-plus"></i> Add crossover</button>
+  </div>
+
+  <!-- DIAMONDS -->
+  <div class="tab-panel" id="tab-diamonds">
+    <div class="placeholder-panel">
+      <i class="ti ti-diamond" style="font-size:24px;display:block;margin-bottom:8px;opacity:.4"></i>
+      <strong>Diamond crossings</strong><br>
+      Planned for a future version. Diamond crossings will be defined here as conflict zones between two crossover connecting tracks.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STEP 3 — SIGNALS
+═══════════════════════════════════════════════════════ -->
+<div class="panel">
+  <div class="sec-title">
+    <span class="step-label">3</span> Signals
+  </div>
+  <div class="info-box ib">
+    <i class="ti ti-info-circle"></i>
+    <div>Route blocks are auto-derived from consecutive signals on the same track in the same direction. Each signal must have exactly one direction.</div>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="edit-tbl" id="tbl-signals">
+      <thead><tr>
+        <th>Signal ID</th><th>Track</th><th>Chainage (m)</th>
+        <th>Direction</th><th>Type</th><th>Notes</th><th></th>
+      </tr></thead>
+      <tbody id="tbody-signals"></tbody>
+    </table>
+  </div>
+  <button class="btn btn-sm" onclick="addRow('signals')"><i class="ti ti-plus"></i> Add signal</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STEP 4 — SCHEMATIC PREVIEW
+═══════════════════════════════════════════════════════ -->
+<div class="panel">
+  <div class="sec-title">
+    <span class="step-label">4</span> Schematic Preview
+  </div>
+  <div class="info-box ib">
+    <i class="ti ti-info-circle"></i>
+    <div>Read-only diagram drawn to chainage scale. Hover over elements to see details. Both tracks shown left-to-right by chainage.</div>
+  </div>
+  <div class="schematic-wrap">
+    <canvas id="schematic" height="220"></canvas>
+  </div>
+  <div id="hover-tip" style="font-size:11px;color:#666;margin-top:6px;min-height:16px"></div>
+  <div class="schematic-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#185FA5;height:6px"></div> NB Track</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3B6D11;height:6px"></div> SB Track</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#854F0B;width:14px;height:14px;border-radius:3px"></div> Platform</div>
+    <div class="legend-item"><span style="display:inline-flex;align-items:flex-end;gap:1px;margin-right:4px"><span style="width:2px;height:10px;background:#A32D2D;display:inline-block"></span><span style="width:7px;height:2px;background:#A32D2D;display:inline-block;margin-bottom:0px"></span><span style="width:6px;height:6px;border-radius:50%;background:#A32D2D;display:inline-block;margin-bottom:-1px"></span></span>Signal</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#555;height:6px"></div> Crossover</div>
+    <div class="legend-item"><div style="width:10px;height:10px;border:2px solid #aaa;border-radius:2px;display:inline-block"></div> &nbsp;CH Jump</div>
+  </div>
+  <div class="btn-row">
+    <button class="btn" onclick="drawSchematic()"><i class="ti ti-refresh"></i> Refresh diagram</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STEP 5 — EXPORT / SAVE
+═══════════════════════════════════════════════════════ -->
+<div class="panel">
+  <div class="sec-title">
+    <span class="step-label">5</span> Save &amp; Export
+  </div>
+  <div class="info-box ig">
+    <i class="ti ti-info-circle"></i>
+    <div>Save exports <strong>track_layout.json</strong> — the master file for this network. Route derivation (routes.csv, route_sections.csv) is handled by a separate converter module.</div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="saveLayout()"><i class="ti ti-download"></i> Save track_layout.json</button>
+  </div>
+</div>
+
+</div><!-- .app -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// MODULE 1 — TRACK LAYOUT EDITOR
+//
+// Data model:
+//   STATE.tracks              — array of track objects
+//   STATE.platforms           — flat array
+//   STATE.gradients           — flat array
+//   STATE.civil_speed_restrictions — flat array
+//   STATE.crossovers          — flat array
+//   STATE.signals             — flat array
+//
+// Output: track_layout.json
+// ═══════════════════════════════════════════════════════════════════════════
+
+const STATE = {
+  metadata: { name: 'My Railway Network', version: '1.0' },
+  tracks: [],
+  platforms: [],
+  gradients: [],
+  civil_speed_restrictions: [],
+  crossovers: [],
+  diamonds: [],
+  signals: []
+};
+
+// ── ID counters ───────────────────────────────────────────────────────────
+const COUNTERS = { platforms:0, gradients:0, speeds:0, crossovers:0, signals:0, jumps:{} };
+
+function nextId(prefix){ COUNTERS[prefix]=(COUNTERS[prefix]||0)+1; return `${prefix.toUpperCase()}-${String(COUNTERS[prefix]).padStart(3,'0')}`; }
+
+// ── Track helpers ─────────────────────────────────────────────────────────
+function getTrackOptions(includeXO=false){
+  let opts = STATE.tracks.map(t=>`<option value="${esc(t.track_id)}">${esc(t.name||t.track_id)}</option>`).join('');
+  if(includeXO) STATE.crossovers.forEach(x=>{ opts+=`<option value="${esc(x.crossover_id)}">${esc(x.crossover_id)}</option>`; });
+  return opts;
+}
+
+function refreshAllTrackDropdowns(){
+  document.querySelectorAll('select.track-sel').forEach(sel=>{
+    const cur=sel.value;
+    sel.innerHTML=getTrackOptions();
+    if(cur) sel.value=cur;
+  });
+}
+
+// ── Utility ───────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+function T(s){ return String(s||'').trim(); }
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STEP 1 — TRACKS
+// ═══════════════════════════════════════════════════════════════════════════
+
+let trackCounter=0;
+const TRACK_COLORS=['#185FA5','#3B6D11','#A32D2D','#854F0B','#6A3FA0','#1A7A6A'];
+
+function addTrack(data=null){
+  trackCounter++;
+  const tid = data ? data.track_id : (trackCounter===1?'NB':trackCounter===2?'SB':`T${trackCounter}`);
+  const name= data ? data.name : (trackCounter===1?'NB Track':trackCounter===2?'SB Track':`Track ${trackCounter}`);
+  const color=TRACK_COLORS[(trackCounter-1)%TRACK_COLORS.length];
+  const track={
+    _uid: 'trk_'+trackCounter,
+    track_id: tid,
+    name: name,
+    chainage_start: data?data.chainage_start:0,
+    chainage_end: data?data.chainage_end:25000,
+    direction: data?data.direction:(trackCounter===1?'northbound':'southbound'),
+    color: color,
+    chainage_jumps: data?data.chainage_jumps:[],
+    _expanded: true
+  };
+  STATE.tracks.push(track);
+  renderTracks();
+  refreshAllTrackDropdowns();
+}
+
+function removeTrack(uid){
+  STATE.tracks=STATE.tracks.filter(t=>t._uid!==uid);
+  renderTracks();
+  refreshAllTrackDropdowns();
+}
+
+function renderTracks(){
+  const el=document.getElementById('track-list');
+  if(!STATE.tracks.length){ el.innerHTML='<div style="color:#aaa;font-size:12px;padding:8px 0">No tracks yet. Add one below.</div>'; return; }
+  el.innerHTML=STATE.tracks.map(tr=>renderTrackCard(tr)).join('');
+}
+
+function renderTrackCard(tr){
+  const jumps=tr.chainage_jumps||[];
+  const jumpRows=jumps.map((j,ji)=>`
+    <tr>
+      <td><input type="number" value="${j.from_ch}" onchange="updateJump('${tr._uid}',${ji},'from_ch',this.value)" placeholder="From CH"></td>
+      <td><input type="number" value="${j.to_ch}" onchange="updateJump('${tr._uid}',${ji},'to_ch',this.value)" placeholder="To CH"></td>
+      <td><input type="text" value="${esc(j.note||'')}" onchange="updateJump('${tr._uid}',${ji},'note',this.value)" placeholder="Note"></td>
+      <td><button class="del-btn" onclick="removeJump('${tr._uid}',${ji})">Remove</button></td>
+    </tr>`).join('');
+
+  return `
+  <div class="track-card" id="card-${tr._uid}">
+    <div class="track-card-hdr" onclick="toggleTrack('${tr._uid}')">
+      <div style="width:12px;height:12px;border-radius:3px;background:${tr.color};flex-shrink:0"></div>
+      <strong style="font-size:13px">${esc(tr.name)}</strong>
+      <span style="font-size:11px;color:#888;margin-left:4px">${esc(tr.track_id)} &nbsp;·&nbsp; ch ${tr.chainage_start}–${tr.chainage_end} m</span>
+      <span style="margin-left:auto;font-size:12px;color:#aaa">${tr._expanded?'▲':'▼'}</span>
+    </div>
+    <div class="track-card-body" ${tr._expanded?'':'style="display:none"'}>
+      <div class="track-fields">
+        <div class="fg"><label>Track ID</label>
+          <input type="text" value="${esc(tr.track_id)}" onchange="updateTrack('${tr._uid}','track_id',this.value)">
+        </div>
+        <div class="fg"><label>Name</label>
+          <input type="text" value="${esc(tr.name)}" onchange="updateTrack('${tr._uid}','name',this.value)">
+        </div>
+        <div class="fg"><label>CH Start (m)</label>
+          <input type="number" value="${tr.chainage_start}" onchange="updateTrack('${tr._uid}','chainage_start',+this.value)">
+        </div>
+        <div class="fg"><label>CH End (m)</label>
+          <input type="number" value="${tr.chainage_end}" onchange="updateTrack('${tr._uid}','chainage_end',+this.value)">
+        </div>
+        <div class="fg"><label>Direction</label>
+          <input type="text" value="${esc(tr.direction)}" onchange="updateTrack('${tr._uid}','direction',this.value)">
+        </div>
+      </div>
+
+      <button class="jump-toggle" onclick="toggleJumps('${tr._uid}')">
+        <i class="ti ti-arrows-exchange"></i> Chainage jumps (${jumps.length})
+      </button>
+      <div class="jump-table-wrap" id="jumps-${tr._uid}" ${jumps.length?'style="display:block"':''}>
+        <table class="edit-tbl" style="margin-top:8px">
+          <thead><tr><th>From CH (m)</th><th>To CH (m)</th><th>Note</th><th></th></tr></thead>
+          <tbody id="jbody-${tr._uid}">${jumpRows}</tbody>
+        </table>
+        <button class="btn btn-sm" style="margin-top:4px" onclick="addJump('${tr._uid}')"><i class="ti ti-plus"></i> Add jump</button>
+      </div>
+
+      <div style="margin-top:10px">
+        <button class="btn btn-sm btn-danger" onclick="removeTrack('${tr._uid}')"><i class="ti ti-trash"></i> Remove track</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleTrack(uid){
+  const tr=STATE.tracks.find(t=>t._uid===uid);
+  if(tr){ tr._expanded=!tr._expanded; renderTracks(); }
+}
+
+function updateTrack(uid,field,val){
+  const tr=STATE.tracks.find(t=>t._uid===uid);
+  if(!tr) return;
+  tr[field]=val;
+  if(field==='name'||field==='track_id'||field==='chainage_start'||field==='chainage_end'){
+    // update card header without full re-render
+    const hdr=document.querySelector(`#card-${uid} .track-card-hdr strong`);
+    if(hdr&&field==='name') hdr.textContent=val;
+    refreshAllTrackDropdowns();
+  }
+}
+
+function toggleJumps(uid){
+  const el=document.getElementById('jumps-'+uid);
+  if(el) el.style.display=el.style.display==='block'?'none':'block';
+}
+
+function addJump(uid){
+  const tr=STATE.tracks.find(t=>t._uid===uid);
+  if(!tr) return;
+  tr.chainage_jumps.push({from_ch:0,to_ch:0,note:''});
+  renderTracks();
+}
+
+function removeJump(uid,idx){
+  const tr=STATE.tracks.find(t=>t._uid===uid);
+  if(!tr) return;
+  tr.chainage_jumps.splice(idx,1);
+  renderTracks();
+}
+
+function updateJump(uid,idx,field,val){
+  const tr=STATE.tracks.find(t=>t._uid===uid);
+  if(!tr||!tr.chainage_jumps[idx]) return;
+  tr.chainage_jumps[idx][field]=field==='note'?val:+val;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STEP 2 — INFRASTRUCTURE TABLES
+// ═══════════════════════════════════════════════════════════════════════════
+
+function showTab(name){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',b.getAttribute('onclick').includes(`'${name}'`)));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id===`tab-${name}`));
+}
+
+// Generic row builder for each table type
+function addRow(type, data=null){
+  const tbody=document.getElementById('tbody-'+type);
+  if(!tbody) return;
+  const tr=document.createElement('tr');
+  tr.dataset.uid='row_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+
+  if(type==='platforms'){
+    const id=data?data.platform_id:nextId('PLT');
+    tr.innerHTML=`
+      <td><input type="text" value="${esc(data?data.platform_id:id)}" placeholder="PLT-001"></td>
+      <td><input type="text" value="${esc(data?data.name:'')}" placeholder="Station A NB Platform"></td>
+      <td><select class="track-sel">${getTrackOptions()}</select></td>
+      <td><input type="number" value="${data?data.from_ch:''}" placeholder="4900"></td>
+      <td><input type="number" value="${data?data.to_ch:''}" placeholder="5500"></td>
+      <td><input type="text" value="${esc(data?data.notes:'')}" placeholder="Notes"></td>
+      <td><button class="del-btn" onclick="this.closest('tr').remove()">Remove</button></td>`;
+    if(data) setTimeout(()=>{ const s=tr.querySelector('select'); if(s){s.value=data.track_id;} },0);
+  }
+  else if(type==='gradients'){
+    tr.innerHTML=`
+      <td><select class="track-sel">${getTrackOptions()}</select></td>
+      <td><input type="number" value="${data?data.from_ch:''}" placeholder="0"></td>
+      <td><input type="number" value="${data?data.to_ch:''}" placeholder="5000"></td>
+      <td><input type="number" step="0.1" value="${data?data.gradient_permille:''}" placeholder="-3.5"></td>
+      <td><input type="text" value="${esc(data?data.notes:'')}" placeholder="Notes"></td>
+      <td><button class="del-btn" onclick="this.closest('tr').remove()">Remove</button></td>`;
+    if(data) setTimeout(()=>{ const s=tr.querySelector('select'); if(s){s.value=data.track_id;} },0);
+  }
+  else if(type==='speeds'){
+    tr.innerHTML=`
+      <td><select class="track-sel">${getTrackOptions()}</select></td>
+      <td><input type="number" value="${data?data.from_ch:''}" placeholder="4900"></td>
+      <td><input type="number" value="${data?data.to_ch:''}" placeholder="5500"></td>
+      <td><input type="number" value="${data?data.speed_limit_kmh:''}" placeholder="40"></td>
+      <td><input type="text" value="${esc(data?data.notes:'')}" placeholder="platform speed"></td>
+      <td><button class="del-btn" onclick="this.closest('tr').remove()">Remove</button></td>`;
+    if(data) setTimeout(()=>{ const s=tr.querySelector('select'); if(s){s.value=data.track_id;} },0);
+  }
+  else if(type==='crossovers'){
+    const uid = 'xo_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+    const tA = data?data.turnout_A:{};
+    const tB = data?data.turnout_B:{};
+    const jmp = data?data.crossing_chainage_jump:{};
+
+    // ── Summary row ──
+    tr.dataset.xoUid = uid;
+    tr.dataset.xoSummary = '1';
+    tr.innerHTML=`
+      <td><input data-field="crossover_id" type="text" value="${esc(data?data.crossover_id:nextId('XO'))}" placeholder="XO-001"></td>
+      <td><input data-field="name" type="text" value="${esc(data?data.name:'')}" placeholder="Station A Crossover"></td>
+      <td><select data-field="tA_track" class="track-sel">${getTrackOptions()}</select></td>
+      <td><input data-field="tA_chainage" type="number" value="${tA.chainage||''}" placeholder="100"></td>
+      <td><select data-field="tB_track" class="track-sel">${getTrackOptions()}</select></td>
+      <td><input data-field="tB_chainage" type="number" value="${tB.chainage||''}" placeholder="300"></td>
+      <td><input data-field="speed_limit_kmh" type="number" value="${data?data.speed_limit_kmh:''}" placeholder="50"></td>
+      <td style="white-space:nowrap;display:flex;gap:4px;padding:6px 4px">
+        <button class="xo-expand-btn" onclick="toggleXODetail('${uid}')"><i class="ti ti-chevron-down"></i> Details</button>
+        <button class="del-btn" onclick="removeXORow('${uid}')">Remove</button>
+      </td>`;
+
+    // ── Detail row ──
+    const detailTr = document.createElement('tr');
+    detailTr.dataset.xoUid = uid;
+    detailTr.dataset.xoDetail = '1';
+    detailTr.className = 'xo-detail-row';
+    detailTr.innerHTML=`<td colspan="8">
+      <div class="xo-detail-panel" id="xo-detail-${uid}">
+        <div class="xo-detail-grid">
+
+          <!-- Turnout A -->
+          <div class="xo-turnout-block">
+            <h4><i class="ti ti-arrow-merge-right"></i> Turnout A</h4>
+            <div class="xo-field-row">
+              <div class="xo-fg"><label>Toe CH (m)</label>
+                <input data-field="tA_toe" type="number" value="${tA.toe_chainage_m||''}" placeholder="100"></div>
+              <div class="xo-fg"><label>Blade Zone — Main CH (m)</label>
+                <input data-field="tA_bz_main" type="number" value="${tA.blade_zone_main_ch||''}" placeholder="140"></div>
+            </div>
+            <div class="xo-field-row">
+              <div class="xo-fg"><label>Blade Zone — Crossing CH (m)</label>
+                <input data-field="tA_bz_cross" type="number" value="${tA.blade_zone_crossing_ch||''}" placeholder="141"></div>
+              <div class="xo-fg"><label>Fouling Pt — Main CH (m)</label>
+                <input data-field="tA_fp_main" type="number" value="${tA.fouling_point_main_ch||''}" placeholder="150"></div>
+            </div>
+            <div class="xo-field-row full">
+              <div class="xo-fg"><label>Fouling Pt — Crossing CH (m)</label>
+                <input data-field="tA_fp_cross" type="number" value="${tA.fouling_point_crossing_ch||''}" placeholder="151"></div>
+            </div>
+          </div>
+
+          <!-- Turnout B -->
+          <div class="xo-turnout-block">
+            <h4><i class="ti ti-arrow-merge-left"></i> Turnout B</h4>
+            <div class="xo-field-row">
+              <div class="xo-fg"><label>Toe CH (m)</label>
+                <input data-field="tB_toe" type="number" value="${tB.toe_chainage_m||''}" placeholder="300"></div>
+              <div class="xo-fg"><label>Blade Zone — Main CH (m)</label>
+                <input data-field="tB_bz_main" type="number" value="${tB.blade_zone_main_ch||''}" placeholder="260"></div>
+            </div>
+            <div class="xo-field-row">
+              <div class="xo-fg"><label>Blade Zone — Crossing CH (m)</label>
+                <input data-field="tB_bz_cross" type="number" value="${tB.blade_zone_crossing_ch||''}" placeholder="261"></div>
+              <div class="xo-fg"><label>Fouling Pt — Main CH (m)</label>
+                <input data-field="tB_fp_main" type="number" value="${tB.fouling_point_main_ch||''}" placeholder="250"></div>
+            </div>
+            <div class="xo-field-row full">
+              <div class="xo-fg"><label>Fouling Pt — Crossing CH (m)</label>
+                <input data-field="tB_fp_cross" type="number" value="${tB.fouling_point_crossing_ch||''}" placeholder="251"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Crossing Chainage Jump -->
+        <div class="xo-jump-block">
+          <h4><i class="ti ti-arrows-exchange"></i> Crossing Chainage Jump</h4>
+          <div class="info-box ia" style="margin-bottom:8px;padding:7px 10px">
+            <i class="ti ti-info-circle"></i>
+            <div>The surveying discontinuity between Turnout A and Turnout B. Defines where the chainage system transitions from one mainline track to the other on the connecting track.</div>
+          </div>
+          <div class="xo-jump-grid">
+            <div class="xo-fg"><label>From Track</label>
+              <select data-field="jmp_from_track" class="track-sel">${getTrackOptions()}</select></div>
+            <div class="xo-fg"><label>From CH (m)</label>
+              <input data-field="jmp_from_ch" type="number" value="${jmp.from_ch||''}" placeholder="200"></div>
+            <div class="xo-fg"><label>To Track</label>
+              <select data-field="jmp_to_track" class="track-sel">${getTrackOptions()}</select></div>
+            <div class="xo-fg"><label>To CH (m)</label>
+              <input data-field="jmp_to_ch" type="number" value="${jmp.to_ch||''}" placeholder="180"></div>
+          </div>
+        </div>
+      </div>
+    </td>`;
+
+    tbody.appendChild(tr);
+    tbody.appendChild(detailTr);
+
+    // Set track selects after DOM insertion (needs setTimeout for select population)
+    setTimeout(()=>{
+      const summaryRow = tbody.querySelector(`tr[data-xo-uid="${uid}"][data-xo-summary]`);
+      const detailRow  = tbody.querySelector(`tr[data-xo-uid="${uid}"][data-xo-detail]`);
+      if(summaryRow){
+        const selA = summaryRow.querySelector('[data-field="tA_track"]');
+        const selB = summaryRow.querySelector('[data-field="tB_track"]');
+        if(selA && tA.track_id) selA.value = tA.track_id;
+        if(selB && tB.track_id) selB.value = tB.track_id;
+      }
+      if(detailRow){
+        const selFrom = detailRow.querySelector('[data-field="jmp_from_track"]');
+        const selTo   = detailRow.querySelector('[data-field="jmp_to_track"]');
+        if(selFrom && jmp.from_track_id) selFrom.value = jmp.from_track_id;
+        if(selTo   && jmp.to_track_id)   selTo.value   = jmp.to_track_id;
+      }
+    },0);
+    return; // early return — rows already appended above
+  }
+  else if(type==='signals'){
+    const dirs=STATE.tracks.map(t=>`<option value="${esc(t.track_id)}">${esc(t.track_id)} (${esc(t.direction)})</option>`).join('');
+    tr.innerHTML=`
+      <td><input type="text" value="${esc(data?data.signal_id:nextId('SIG'))}" placeholder="SIG-NB-001"></td>
+      <td><select class="track-sel">${getTrackOptions()}</select></td>
+      <td><input type="number" value="${data?data.chainage:''}" placeholder="280"></td>
+      <td><input type="text" value="${esc(data?data.direction:'NB')}" placeholder="NB or SB"></td>
+      <td><select>
+        <option value="physical" ${data&&data.type==='physical'?'selected':''}>Physical</option>
+        <option value="virtual"  ${data&&data.type==='virtual' ?'selected':''}>Virtual</option>
+      </select></td>
+      <td><input type="text" value="${esc(data?data.notes:'')}" placeholder="Notes"></td>
+      <td><button class="del-btn" onclick="this.closest('tr').remove()">Remove</button></td>`;
+    if(data) setTimeout(()=>{ const s=tr.querySelector('select.track-sel'); if(s){s.value=data.track_id;} },0);
+  }
+
+  tbody.appendChild(tr);
+}
+
+// ── Read tables back into arrays ──────────────────────────────────────────
+function readTable(type){
+  const rows=[...document.querySelectorAll(`#tbody-${type} tr`)];
+  if(type==='platforms') return rows.map(r=>{
+    const i=r.querySelectorAll('input,select');
+    return {platform_id:T(i[0].value),name:T(i[1].value),track_id:T(i[2].value),
+            from_ch:+i[3].value,to_ch:+i[4].value,notes:T(i[5].value)};
+  }).filter(r=>r.platform_id);
+  if(type==='gradients') return rows.map(r=>{
+    const i=r.querySelectorAll('input,select');
+    return {track_id:T(i[0].value),from_ch:+i[1].value,to_ch:+i[2].value,
+            gradient_permille:+i[3].value,notes:T(i[4].value)};
+  }).filter(r=>r.track_id);
+  if(type==='speeds') return rows.map(r=>{
+    const i=r.querySelectorAll('input,select');
+    return {track_id:T(i[0].value),from_ch:+i[1].value,to_ch:+i[2].value,
+            speed_limit_kmh:+i[3].value,notes:T(i[4].value)};
+  }).filter(r=>r.track_id);
+  if(type==='crossovers'){
+    // Collect only summary rows — each summary row has a paired detail row
+    const summaryRows=[...document.querySelectorAll('#tbody-crossovers tr[data-xo-summary]')];
+    return summaryRows.map(sr=>{
+      const uid = sr.dataset.xoUid;
+      const dr  = document.querySelector(`#tbody-crossovers tr[data-xo-uid="${uid}"][data-xo-detail]`);
+      const f=(row,field)=>{ const el=row?row.querySelector(`[data-field="${field}"]`):null; return el?T(el.value):null; };
+      const n=(row,field)=>{ const el=row?row.querySelector(`[data-field="${field}"]`):null; return el&&el.value!==''?+el.value:null; };
+      return {
+        crossover_id: f(sr,'crossover_id'),
+        name:         f(sr,'name'),
+        turnout_A: {
+          track_id:               f(sr,'tA_track'),
+          chainage:               n(sr,'tA_chainage'),
+          toe_chainage_m:         n(dr,'tA_toe'),
+          blade_zone_main_ch:     n(dr,'tA_bz_main'),
+          blade_zone_crossing_ch: n(dr,'tA_bz_cross'),
+          fouling_point_main_ch:  n(dr,'tA_fp_main'),
+          fouling_point_crossing_ch: n(dr,'tA_fp_cross')
+        },
+        turnout_B: {
+          track_id:               f(sr,'tB_track'),
+          chainage:               n(sr,'tB_chainage'),
+          toe_chainage_m:         n(dr,'tB_toe'),
+          blade_zone_main_ch:     n(dr,'tB_bz_main'),
+          blade_zone_crossing_ch: n(dr,'tB_bz_cross'),
+          fouling_point_main_ch:  n(dr,'tB_fp_main'),
+          fouling_point_crossing_ch: n(dr,'tB_fp_cross')
+        },
+        crossing_chainage_jump: {
+          from_track_id: f(dr,'jmp_from_track'),
+          from_ch:       n(dr,'jmp_from_ch'),
+          to_track_id:   f(dr,'jmp_to_track'),
+          to_ch:         n(dr,'jmp_to_ch')
+        },
+        speed_limit_kmh: n(sr,'speed_limit_kmh')
+      };
+    }).filter(r=>r.crossover_id);
+  }
+  if(type==='signals') return rows.map(r=>{
+    const i=r.querySelectorAll('input,select');
+    return {signal_id:T(i[0].value),track_id:T(i[1].value),chainage:+i[2].value,
+            direction:T(i[3].value),type:T(i[4].value),notes:T(i[5].value)};
+  }).filter(r=>r.signal_id);
+  return [];
+}
+
+// ── Crossover detail toggle & remove ─────────────────────────────────────
+function toggleXODetail(uid){
+  const panel = document.getElementById('xo-detail-'+uid);
+  if(!panel) return;
+  const isOpen = panel.classList.toggle('open');
+  // Update button icon
+  const btn = document.querySelector(`tr[data-xo-uid="${uid}"][data-xo-summary] .xo-expand-btn`);
+  if(btn) btn.innerHTML = isOpen
+    ? '<i class="ti ti-chevron-up"></i> Details'
+    : '<i class="ti ti-chevron-down"></i> Details';
+}
+
+function removeXORow(uid){
+  document.querySelectorAll(`#tbody-crossovers tr[data-xo-uid="${uid}"]`).forEach(r=>r.remove());
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+
+let schematicHitAreas=[];
+
+function drawSchematic(){
+  const canvas=document.getElementById('schematic');
+  const ctx=canvas.getContext('2d');
+
+  // Collect current data
+  const tracks=STATE.tracks;
+  const platforms=readTable('platforms');
+  const crossovers=readTable('crossovers');
+  const signals=readTable('signals');
+  const jumps=tracks.flatMap(t=>(t.chainage_jumps||[]).map(j=>({...j,track_id:t.track_id,_uid:t._uid})));
+
+  if(!tracks.length){
+    canvas.width=600; canvas.height=80;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#aaa'; ctx.font='13px system-ui'; ctx.textAlign='center';
+    ctx.fillText('Add tracks in Step 1 to see the schematic.',300,44);
+    return;
+  }
+
+  // Layout constants
+  const PAD_L=80, PAD_R=40, PAD_TOP=40;
+  const TRACK_SPACING=100;
+  const TRACK_H=6;
+  const canvasW=Math.max(900, canvas.parentElement.clientWidth-2);
+  const canvasH=PAD_TOP*2 + tracks.length*TRACK_SPACING + 20;
+  canvas.width=canvasW; canvas.height=canvasH;
+  ctx.clearRect(0,0,canvasW,canvasH);
+
+  // Determine global chainage range (per-track independent — use a shared display scale based on lengths)
+  const trackMeta=tracks.map((tr,ti)=>{
+    const y=PAD_TOP + ti*TRACK_SPACING + TRACK_SPACING/2;
+    const chStart=tr.chainage_start||0;
+    const chEnd=tr.chainage_end||25000;
+    const chRange=chEnd-chStart||1;
+    const drawW=canvasW-PAD_L-PAD_R;
+    return {tr,y,chStart,chEnd,chRange,drawW};
+  });
+
+  function chToX(meta,ch){
+    return PAD_L + ((ch-meta.chStart)/meta.chRange)*meta.drawW;
+  }
+
+  schematicHitAreas=[];
+
+  // ── Draw each track ──────────────────────────────────────────────────
+  trackMeta.forEach(({tr,y,chStart,chEnd})=>{
+    const meta=trackMeta.find(m=>m.tr===tr);
+    const x0=chToX(meta,chStart), x1=chToX(meta,chEnd);
+
+    // Track line
+    ctx.strokeStyle=tr.color||'#185FA5';
+    ctx.lineWidth=TRACK_H;
+    ctx.lineCap='butt';
+    ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
+
+    // Track label
+    ctx.fillStyle='#444'; ctx.font='bold 11px system-ui'; ctx.textAlign='left';
+    ctx.fillText(tr.name||tr.track_id,4,y+4);
+
+    // CH start/end labels
+    ctx.fillStyle='#888'; ctx.font='10px system-ui'; ctx.textAlign='center';
+    ctx.fillText(chStart,x0,y+18);
+    ctx.fillText(chEnd,x1,y+18);
+
+    // Chainage jumps — short grey notch centred on track
+    (tr.chainage_jumps||[]).forEach(j=>{
+      const xj=chToX(meta,j.from_ch);
+      ctx.strokeStyle='#aaa'; ctx.lineWidth=2; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(xj,y-8); ctx.lineTo(xj,y+8); ctx.stroke();
+      schematicHitAreas.push({x:xj-5,y:y-9,w:10,h:18,tip:`CH Jump: ${j.from_ch}→${j.to_ch} (${tr.name})${j.note?' · '+j.note:''}`});
+    });
+  });
+
+  // ── Platforms ─────────────────────────────────────────────────────────
+  // NB platform: flat rect below NB track (inward-facing)
+  // SB platform: flat rect above SB track (inward-facing)
+  // Determine "inward" by track index — track 0 = top, platforms face down;
+  // last track = bottom, platforms face up; middle tracks use track index order.
+  platforms.forEach(p=>{
+    const meta=trackMeta.find(m=>m.tr.track_id===p.track_id);
+    if(!meta) return;
+    const x0=chToX(meta,p.from_ch), x1=chToX(meta,p.to_ch);
+    const y=meta.y;
+    const HALF_TRACK=TRACK_H/2;
+    const PLT_H=8;
+    const trackIdx=trackMeta.indexOf(meta);
+    const isTop=trackIdx===0;
+    // Top track → platform below; all others (including bottom) → platform above
+    const pyTop = isTop ? y+HALF_TRACK : y-HALF_TRACK-PLT_H;
+    ctx.fillStyle='rgba(133,79,11,0.35)';
+    ctx.fillRect(x0,pyTop,x1-x0,PLT_H);
+    ctx.strokeStyle='#854F0B'; ctx.lineWidth=1; ctx.setLineDash([]);
+    ctx.strokeRect(x0,pyTop,x1-x0,PLT_H);
+    // Label outside (away from track)
+    const label=p.name||p.platform_id;
+    ctx.fillStyle='#854F0B'; ctx.font='10px system-ui'; ctx.textAlign='center';
+    if(x1-x0>30){
+      const labelY = isTop ? pyTop+PLT_H+10 : pyTop-4;
+      ctx.fillText(label,(x0+x1)/2,labelY);
+    }
+    schematicHitAreas.push({x:x0,y:pyTop-2,w:x1-x0,h:PLT_H+4,tip:`Platform: ${label} · Track ${p.track_id} · CH ${p.from_ch}–${p.to_ch} m`});
+  });
+
+  // ── Signals ──────────────────────────────────────────────────────────
+  // Convention: NB (left→right travel) → post rises above track, arm points right  |-O
+  //             SB (right→left travel) → post drops below track, arm points left   O-|
+  // Post: 10px, arm: 10px, head: solid red dot r=4
+  signals.forEach(s=>{
+    const meta=trackMeta.find(m=>m.tr.track_id===s.track_id);
+    if(!meta) return;
+    const x=chToX(meta,s.chainage);
+    const y=meta.y;
+    const HALF_TRACK=TRACK_H/2;
+    const POST=10, ARM=10, HEAD_R=4;
+    // Determine direction: NB = arm right, post above; SB = arm left, post below
+    const dir=s.direction.toUpperCase();
+    const isNB = dir.includes('N') || (!dir.includes('S') && meta.tr.direction.toLowerCase().includes('north'));
+    ctx.strokeStyle='#A32D2D'; ctx.lineWidth=2; ctx.setLineDash([]);
+    if(isNB){
+      // Post: from top of track upward
+      const postTop = y - HALF_TRACK - POST;
+      ctx.beginPath(); ctx.moveTo(x, y-HALF_TRACK); ctx.lineTo(x, postTop); ctx.stroke();
+      // Arm: right
+      ctx.beginPath(); ctx.moveTo(x, postTop); ctx.lineTo(x+ARM, postTop); ctx.stroke();
+      // Head
+      ctx.fillStyle='#A32D2D';
+      ctx.beginPath(); ctx.arc(x+ARM, postTop, HEAD_R, 0, Math.PI*2); ctx.fill();
+      schematicHitAreas.push({x:x-5,y:postTop-HEAD_R-2,w:ARM+HEAD_R+5,h:POST+HEAD_R+4,
+        tip:`Signal: ${s.signal_id} · ${s.track_id} ch ${s.chainage} m · Dir ${s.direction} · ${s.type}`});
+    } else {
+      // Post: from bottom of track downward
+      const postBot = y + HALF_TRACK + POST;
+      ctx.beginPath(); ctx.moveTo(x, y+HALF_TRACK); ctx.lineTo(x, postBot); ctx.stroke();
+      // Arm: left
+      ctx.beginPath(); ctx.moveTo(x, postBot); ctx.lineTo(x-ARM, postBot); ctx.stroke();
+      // Head
+      ctx.fillStyle='#A32D2D';
+      ctx.beginPath(); ctx.arc(x-ARM, postBot, HEAD_R, 0, Math.PI*2); ctx.fill();
+      schematicHitAreas.push({x:x-ARM-HEAD_R-2,y:y+HALF_TRACK-2,w:ARM+HEAD_R+7,h:POST+HEAD_R+4,
+        tip:`Signal: ${s.signal_id} · ${s.track_id} ch ${s.chainage} m · Dir ${s.direction} · ${s.type}`});
+    }
+  });
+
+  // ── Crossovers ───────────────────────────────────────────────────────
+  // Drawn as solid dark grey line, same weight as track lines — no dots, no dashes
+  crossovers.forEach(xo=>{
+    const metaA=trackMeta.find(m=>m.tr.track_id===xo.turnout_A.track_id);
+    const metaB=trackMeta.find(m=>m.tr.track_id===xo.turnout_B.track_id);
+    if(!metaA||!metaB) return;
+    const xA=chToX(metaA,xo.turnout_A.chainage);
+    const xB=chToX(metaB,xo.turnout_B.chainage);
+    const yA=metaA.y, yB=metaB.y;
+    ctx.strokeStyle='#555'; ctx.lineWidth=TRACK_H; ctx.lineCap='round'; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(xA,yA); ctx.lineTo(xB,yB); ctx.stroke();
+    ctx.lineCap='butt';
+    // ID label at midpoint
+    const mx=(xA+xB)/2, my=(yA+yB)/2;
+    ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.fillRect(mx-18,my-7,36,14);
+    ctx.fillStyle='#555'; ctx.font='bold 9px system-ui'; ctx.textAlign='center';
+    ctx.fillText(xo.crossover_id,mx,my+4);
+    const tA2=xo.turnout_A||{}, tB2=xo.turnout_B||{}, jmp2=xo.crossing_chainage_jump||{};
+    const distA = (jmp2.from_ch!=null&&tA2.chainage!=null)?Math.abs(jmp2.from_ch-tA2.chainage):null;
+    const distB = (jmp2.to_ch!=null&&tB2.chainage!=null)?Math.abs(jmp2.to_ch-tB2.chainage):null;
+    const totalDist = (distA!=null&&distB!=null)?(distA+distB+'m'):'-';
+    schematicHitAreas.push({x:Math.min(xA,xB)-8,y:Math.min(yA,yB)-8,w:Math.abs(xA-xB)+16,h:Math.abs(yA-yB)+16,
+      tip:`Crossover: ${xo.crossover_id} ${xo.name?'· '+xo.name:''} · ${xo.speed_limit_kmh}km/h · Total dist: ${totalDist} · Toe A: ch${tA2.toe_chainage_m??'-'} · FP A main: ch${tA2.fouling_point_main_ch??'-'} · Toe B: ch${tB2.toe_chainage_m??'-'} · FP B main: ch${tB2.fouling_point_main_ch??'-'} · Jump: ${jmp2.from_track_id??'-'} ch${jmp2.from_ch??'-'} → ${jmp2.to_track_id??'-'} ch${jmp2.to_ch??'-'}`});
+  });
+}
+
+// Hover tooltip
+document.getElementById('schematic').addEventListener('mousemove',function(e){
+  const rect=this.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const hit=schematicHitAreas.find(a=>mx>=a.x&&mx<=a.x+a.w&&my>=a.y&&my<=a.y+a.h);
+  document.getElementById('hover-tip').textContent=hit?hit.tip:'';
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STEP 5 — SAVE / LOAD
+// ═══════════════════════════════════════════════════════════════════════════
+
+function collectState(){
+  return {
+    metadata:{
+      name: STATE.metadata.name,
+      created: new Date().toISOString().slice(0,10),
+      version: STATE.metadata.version
+    },
+    tracks: STATE.tracks.map(({_uid,_expanded,color,...rest})=>rest),
+    platforms:        readTable('platforms'),
+    gradients:        readTable('gradients'),
+    civil_speed_restrictions: readTable('speeds'),
+    crossovers:       readTable('crossovers'),
+    diamonds:         [],
+    signals:          readTable('signals')
+  };
+}
+
+function saveLayout(){
+  const data=collectState();
+  const json=JSON.stringify(data,null,2);
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+  a.download='track_layout.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('Saved track_layout.json');
+}
+
+function handleLoadDrop(e){
+  e.preventDefault();
+  document.getElementById('load-zone').classList.remove('over');
+  const f=e.dataTransfer.files[0]; if(f) parseLayout(f);
+}
+
+function loadLayout(e){
+  const f=e.target.files[0]; if(f) parseLayout(f);
+}
+
+function parseLayout(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      applyLayout(data);
+      toast('Loaded '+file.name);
+    } catch(err){ alert('Error loading layout: '+err.message); }
+  };
+  reader.readAsText(file);
+}
+
+function applyLayout(data){
+  // Reset
+  STATE.tracks=[];
+  trackCounter=0;
+  ['platforms','gradients','speeds','crossovers','signals'].forEach(t=>{
+    const tbody=document.getElementById('tbody-'+t);
+    if(tbody) tbody.innerHTML='';
+  });
+
+  // Tracks
+  (data.tracks||[]).forEach(t=>addTrack(t));
+
+  // Tables
+  (data.platforms||[]).forEach(r=>addRow('platforms',r));
+  (data.gradients||[]).forEach(r=>addRow('gradients',r));
+  (data.civil_speed_restrictions||[]).forEach(r=>addRow('speeds',r));
+  (data.crossovers||[]).forEach(r=>addRow('crossovers',r));
+  (data.signals||[]).forEach(r=>addRow('signals',r));
+
+  setTimeout(drawSchematic,100);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT — default two tracks
+// ═══════════════════════════════════════════════════════════════════════════
+addTrack();
+addTrack();
+setTimeout(drawSchematic,50);
+
+window.addEventListener('resize',()=>{ clearTimeout(window._rsz); window._rsz=setTimeout(drawSchematic,200); });
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// SHELL BRIDGE (M1) — added 09/09/2026 for the integrated shell
+// (claude/shell_architecture_09092026.md). Appended after the module's own
+// script; does NOT modify any function above. Only active when this file is
+// loaded inside the shell's iframe — opened standalone, it's inert and the
+// module behaves exactly as before.
+//
+// Sync policy for M1 (confirmed 09/09/2026): output is sent to the shell
+// only when the user clicks "Save" (not on every edit) — wraps saveLayout()
+// rather than editing its body. Input is applied via the module's own
+// applyLayout(data), reused as-is.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  if (window.parent === window) return; // standalone mode — bridge inactive
+
+  function sendOutput(){
+    window.parent.postMessage({ type:'MODULE_OUTPUT', module:'M1', payload: collectState() }, '*');
+  }
+
+  // Module → shell: after the existing Save behaviour runs, also report
+  // the current layout to the shell.
+  const _origSaveLayout = saveLayout;
+  saveLayout = function(){
+    _origSaveLayout();
+    sendOutput();
+  };
+
+  // Shell → module: on STATE_UPDATE, pre-fill from STATE.trackLayout if present.
+  // On REQUEST_SYNC, report the current in-progress state WITHOUT triggering
+  // a file download — this is what the shell's Previous/Next/stepper
+  // navigation sends right before leaving this step, so data entered here
+  // isn't lost even if the user never clicked M1's own Save button. Save
+  // still exists separately for actually downloading track_layout.json.
+  window.addEventListener('message', function(ev){
+    if (ev.source !== window.parent) return; // ignore anything not from the shell
+    const msg = ev.data;
+    if (!msg) return;
+    if (msg.type === 'STATE_UPDATE' && msg.payload && msg.payload.trackLayout) {
+      applyLayout(msg.payload.trackLayout);
+    }
+    if (msg.type === 'REQUEST_SYNC') {
+      sendOutput();
+    }
+    if (msg.type === 'REQUEST_RESIZE') {
+      // Shell asks for a fresh height reading right after making this
+      // module the visible step. Needed because the very first
+      // ResizeObserver reading (on load, while this iframe was still
+      // display:none) can be a tiny/wrong number that never gets
+      // corrected on its own — see the shell's showActive() for why.
+      // Double rAF waits for the browser to actually finish laying out
+      // the now-visible content before measuring.
+      requestAnimationFrame(()=>requestAnimationFrame(reportHeight));
+    }
+  });
+
+  // Tell the shell this module's bridge is attached and ready to receive
+  // STATE_UPDATE (the shell sends its one-time auto-fill in response).
+  window.parent.postMessage({ type:'MODULE_READY', module:'M1' }, '*');
+
+  // ── Width normalization (09/09/2026) ──────────────────────────────────
+  // Injected override, not an edit to the module's own <style> block: keeps
+  // every module the same content width inside the shell so switching steps
+  // doesn't visibly change width. 1000px chosen to stay clear of the
+  // schematic canvas, which has its own horizontal scroll when it needs more.
+  const styleOverride = document.createElement('style');
+  styleOverride.textContent = '.app{max-width:1000px}';
+  document.head.appendChild(styleOverride);
+
+  // ── Auto-height reporting (09/09/2026) ────────────────────────────────
+  // Reports this document's actual height to the shell so the iframe can be
+  // sized to fit exactly — avoids a scrollbar inside the iframe stacked on
+  // top of the shell page's own scrollbar. Re-measures on any layout change
+  // (adding/removing tracks or rows, expanding a crossover's detail panel,
+  // toggling chainage jumps, etc.), not just once on load.
+  function reportHeight(){
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M1', height: document.documentElement.scrollHeight }, '*');
+  }
+  new ResizeObserver(reportHeight).observe(document.documentElement);
+  reportHeight();
+})();
+</script>
+</body>
+</html>
