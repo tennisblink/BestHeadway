@@ -58,6 +58,9 @@
   .logo .dot{color:var(--accent)}
   .nav-links{display:flex;gap:32px;font-size:14px;color:var(--ink-soft)}
   .nav-links a:hover{color:var(--ink)}
+  .nav-cta-group{display:flex;align-items:center;gap:20px}
+  .nav-contact{font-size:14px;color:var(--ink-soft);text-decoration:none;white-space:nowrap}
+  .nav-contact:hover{color:var(--ink)}
   .nav-cta{background:var(--ink);color:var(--bg);padding:10px 20px;border-radius:100px;font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
 
   /* ===== HERO ===== */
@@ -100,19 +103,6 @@
   .stage .t{font-weight:600;font-size:13.5px;margin-bottom:6px}
   .stage .d{font-size:12px;color:var(--ink-soft);line-height:1.5}
 
-  /* ===== ZONES (ATO logic) ===== */
-  .zones{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-  .zone{background:var(--surface);padding:26px 24px}
-  .zone .z-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
-  .zone .z-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-  .zone.brake .z-dot{background:var(--ink)}
-  .zone.cruise .z-dot{background:var(--ink-soft)}
-  .zone.accel .z-dot{background:var(--accent)}
-  .zone .z-name{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
-  .zone h3{font-size:16px;margin-bottom:8px}
-  .zone p{font-size:13px;color:var(--ink-soft);line-height:1.55}
-  .zone .cond{margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-deep);background:var(--accent-tint);display:inline-block;padding:5px 10px;border-radius:6px}
-
   /* ===== FEATURES ===== */
   .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
   .feat{background:var(--surface);padding:28px}
@@ -140,15 +130,17 @@
     .hero-grid{grid-template-columns:1fr}
     .diagram-card{order:-1}
     .pipeline{grid-template-columns:repeat(4,1fr)}
-    .zones,.grid3{grid-template-columns:1fr 1fr}
+    .grid3{grid-template-columns:1fr 1fr}
     .aud-grid{grid-template-columns:1fr 1fr}
   }
   @media(max-width:640px){
     .hero h1{font-size:34px}
     .nav-links{display:none}
     .pipeline{grid-template-columns:1fr 1fr}
-    .zones,.grid3,.aud-grid{grid-template-columns:1fr}
+    .grid3,.aud-grid{grid-template-columns:1fr}
     section{padding:64px 0}
+    .nav-cta-group{gap:12px}
+    .nav-contact{display:none}
   }
 </style>
 </head>
@@ -160,17 +152,20 @@
     <a href="#features">Capabilities</a>
     <a href="#audience">Who it's for</a>
   </div>
-  <a href="mailto:tennisolala@gmail.com" class="nav-cta">Contact us</a>
+  <div class="nav-cta-group">
+    <a href="mailto:leon.song.work@gmail.com" class="nav-contact">Contact us</a>
+    <a href="https://bestheadway.com/app/" class="nav-cta">Launch App</a>
+  </div>
 </nav>
 
 <section class="hero">
   <div class="hero-grid">
     <div>
       <span class="eyebrow">Railway headway &amp; capacity simulation</span>
-      <h1>See how your railway behaves&nbsp;— before a single train runs.</h1>
-      <p class="sub">Best Headway models rolling stock, routes, signalling and interlocking with real ATO physics, entirely in your browser. No install, no server — just answers.</p>
+      <h1>The most accurate way to your best headway.</h1>
+      <p class="sub">Best Headway models real trainborne and trackside signalling logic and Rolling Stock physics, entirely in your browser. No black box — just answers.</p>
       <div class="cta-row">
-        <a href="mailto:tennisolala@gmail.com" class="btn primary">Request a walkthrough →</a>
+        <a href="https://bestheadway.com/app/" class="btn primary">Launch App →</a>
         <a href="#pipeline" class="btn ghost">See how it works</a>
       </div>
     </div>
@@ -222,47 +217,17 @@
   <div class="wrap">
     <div class="section-head reveal">
       <div class="kicker">The pipeline</div>
-      <h2>Seven stages, one contract</h2>
+      <h2>Seven stages, one Interface</h2>
       <p>Each module reads a clean input and writes a clean output — chain the full pipeline, or run any stage on its own.</p>
     </div>
     <div class="pipeline reveal">
-      <div class="stage on"><div class="n">01</div><div class="t">Track Layout</div><div class="d">Tracks, signals, gradients &amp; crossovers</div></div>
-      <div class="stage on"><div class="n">02</div><div class="t">Rolling Stock</div><div class="d">Length, speed, accel &amp; braking rates</div></div>
-      <div class="stage on"><div class="n">03</div><div class="t">Route Info</div><div class="d">Signal-to-signal blocks, gradient, speed</div></div>
-      <div class="stage on"><div class="n">04</div><div class="t">Scenario Builder</div><div class="d">Departures, stops &amp; dwell times</div></div>
-      <div class="stage on"><div class="n">05</div><div class="t">Simulation Engine</div><div class="d">Tick-based physics &amp; ATO logic</div></div>
-      <div class="stage on"><div class="n">06</div><div class="t">Interlocking</div><div class="d">Route conflict &amp; occupancy checks</div></div>
-      <div class="stage on"><div class="n">07</div><div class="t">Results</div><div class="d">Time&ndash;distance &amp; speed&ndash;distance diagrams</div></div>
-    </div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <div class="section-head reveal">
-      <div class="kicker">Inside the engine</div>
-      <h2>Every tick, one decision</h2>
-      <p>Module 5 drives each train through a 3-zone ATO strategy — the same brake/cruise/accelerate logic a real automatic train operation system uses.</p>
-    </div>
-    <div class="zones reveal">
-      <div class="zone brake">
-        <div class="z-head"><span class="z-dot"></span><span class="z-name">Zone 1</span></div>
-        <h3>Brake</h3>
-        <p>Full service brake applied — the train must slow now to reach its target speed at the target point.</p>
-        <span class="cond">braking_dist ≥ distance_to_target</span>
-      </div>
-      <div class="zone cruise">
-        <div class="z-head"><span class="z-dot"></span><span class="z-name">Zone 2</span></div>
-        <h3>Cruise</h3>
-        <p>No traction, no braking. The train holds speed at or just under the current limit.</p>
-        <span class="cond">speed ≥ speed_limit</span>
-      </div>
-      <div class="zone accel">
-        <div class="z-head"><span class="z-dot"></span><span class="z-name">Zone 3</span></div>
-        <h3>Accelerate</h3>
-        <p>Full service acceleration — below the limit, with no braking required yet.</p>
-        <span class="cond">speed &lt; speed_limit</span>
-      </div>
+      <div class="stage on"><div class="n">01</div><div class="t">Track Layout</div><div class="d">Lay out your network.</div></div>
+      <div class="stage on"><div class="n">02</div><div class="t">System Parameters</div><div class="d">Everything can be configured.</div></div>
+      <div class="stage on"><div class="n">03</div><div class="t">Route Info</div><div class="d">How trains move from signal to signal.</div></div>
+      <div class="stage on"><div class="n">04</div><div class="t">Scenario Builder</div><div class="d">Set the timetable.</div></div>
+      <div class="stage on"><div class="n">05</div><div class="t">Interlocking</div><div class="d">Works whether it's CBTC or train-to-train.</div></div>
+      <div class="stage on"><div class="n">06</div><div class="t">Simulation Engine</div><div class="d">Watch every train run, tick by tick.</div></div>
+      <div class="stage on"><div class="n">07</div><div class="t">Results</div><div class="d">Analyze and validate everything.</div></div>
     </div>
   </div>
 </section>
@@ -272,13 +237,13 @@
     <div class="section-head reveal">
       <div class="kicker">Capabilities</div>
       <h2>Built for real headway analysis</h2>
-      <p>Not a toy model — a physics-based engine, editable data at every stage, and diagrams built for the questions operators actually ask.</p>
+      <p>a physics-based engine, editable data at every stage, and diagrams built for the questions operators actually ask.</p>
     </div>
     <div class="grid3 reveal">
       <div class="feat"><div class="ico">Δv</div><h3>Real kinematics</h3><p>SUVAT displacement, speed and chainage updates every tick — not linear approximations.</p></div>
       <div class="feat"><div class="ico">t</div><h3>Discrete-time engine</h3><p>A configurable tick interval drives every train's state machine from departure to terminus.</p></div>
       <div class="feat"><div class="ico">▤</div><h3>Time&ndash;distance diagrams</h3><p>See headway, conflicts and spacing across the whole timetable at a glance.</p></div>
-      <div class="feat"><div class="ico">⛔</div><h3>Interlocking-aware</h3><p>Route and occupancy checks surface conflicts before they reach the real network.</p></div>
+      <div class="feat"><div class="ico">⇄</div><h3>Interlocking-aware</h3><p>Interlocking rules that work exactly like the real signalling system.</p></div>
       <div class="feat"><div class="ico">✎</div><h3>Editable at every step</h3><p>Routes, sections and scenarios are inline-editable tables with live validation.</p></div>
       <div class="feat"><div class="ico">◯</div><h3>Zero install</h3><p>Pure client-side. No server, no build step, no account — open it and run.</p></div>
     </div>
@@ -289,11 +254,11 @@
   <div class="wrap">
     <div class="section-head reveal">
       <div class="kicker">Who it's for</div>
-      <h2>Built alongside the people who plan railways</h2>
+      <h2>Built alongside the people who care about railways.</h2>
     </div>
     <div class="aud-grid reveal">
-      <div class="aud"><div class="tag">Operators</div><h3>Transit authorities</h3><p>Pressure-test headway and capacity assumptions on your own network before committing to a timetable.</p></div>
-      <div class="aud"><div class="tag">Consultancies</div><h3>Engineering firms</h3><p>Run fast, repeatable capacity and signalling studies across client engagements.</p></div>
+      <div class="aud"><div class="tag">Operations</div><h3>Transit authorities</h3><p>Pressure-test headway and capacity assumptions on your railway network before committing to a timetable.</p></div>
+      <div class="aud"><div class="tag">Consultancy</div><h3>Engineering firms</h3><p>Run fast, repeatable capacity and signalling studies across client engagements.</p></div>
       <div class="aud"><div class="tag">Vendors</div><h3>Rolling stock &amp; signalling</h3><p>Demonstrate the headway performance of your systems with data, not slideware.</p></div>
       <div class="aud"><div class="tag">Academia</div><h3>Research &amp; teaching</h3><p>A transparent, inspectable physics model for coursework and rail operations research.</p></div>
     </div>
@@ -303,7 +268,7 @@
 <section class="cta-band" id="contact">
   <h2>Curious what it looks like on your network?</h2>
   <p>Send a note and we'll walk you through a run on a scenario close to yours.</p>
-  <a href="mailto:tennisolala@gmail.com" class="btn primary">Contact us →</a>
+  <a href="mailto:leon.song.work@gmail.com" class="btn primary">Contact us →</a>
 </section>
 
 <footer>Best Headway — a railway headway &amp; capacity simulation tool</footer>
