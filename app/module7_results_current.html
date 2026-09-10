@@ -906,8 +906,15 @@ function toast(msg){
   window.parent.postMessage({ type:'MODULE_READY', module:'M7' }, '*');
 
   // ── Width normalization (09/09/2026) ──────────────────────────────────
+  // body min-height override added 10/09/2026 (round 3): neutralizes this
+  // module's own body{min-height:100vh}, which inside an iframe tracks the
+  // iframe's OWN last-assigned height and was the real root cause behind
+  // two rounds of whack-a-mole (a +6px buffer causing infinite growth, then
+  // its removal causing a double scrollbar) — see M1's bridge comment and
+  // claude/PROJECT_STATE.md (round-3 entry) for the full root-cause writeup.
+  // Does not affect real content-driven height changes during editing.
   const styleOverride = document.createElement('style');
-  styleOverride.textContent = '.app{max-width:1000px}';
+  styleOverride.textContent = '.app{max-width:1000px} body{min-height:auto}';
   document.head.appendChild(styleOverride);
 
   // ── Auto-height reporting (09/09/2026, updated 10/09/2026) ─────────────

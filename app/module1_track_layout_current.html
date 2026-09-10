@@ -1097,8 +1097,30 @@ window.addEventListener('resize',()=>{ clearTimeout(window._rsz); window._rsz=se
   // every module the same content width inside the shell so switching steps
   // doesn't visibly change width. 1000px chosen to stay clear of the
   // schematic canvas, which has its own horizontal scroll when it needs more.
+  //
+  // ── body min-height override (10/09/2026, round 3) ─────────────────────
+  // This module's own <style> block has body{min-height:100vh} (a normal
+  // full-viewport reset for standalone use, unrelated to the shell). Inside
+  // an iframe, 100vh is sized against the IFRAME's own currently-assigned
+  // height, not the outer browser window. That made body's minimum height
+  // track whatever height the shell last set on this iframe, which coupled
+  // "what we measure" to "what we were last assigned" — the actual root
+  // cause behind two rounds of whack-a-mole today: a flat +6px height-report
+  // buffer (round 1) fed that coupling into an infinite-growth loop
+  // (reverted, round 2); removing the buffer then let a genuine small
+  // under-measurement resurface as a double scrollbar (see PROJECT_STATE.md,
+  // round-3 entry, 10/09/2026, for the full story). Overriding min-height to
+  // auto here — same injection technique as the width override above,
+  // appended after this module's own <style> block so it wins on source
+  // order — removes the 100vh coupling entirely. Real content-driven height
+  // changes during editing (adding a track, expanding a panel, etc.) are
+  // completely unaffected: ResizeObserver still measures the actual DOM via
+  // scrollHeight regardless of this rule; only the artificial "floor tied to
+  // the iframe's own last-assigned height" is gone. With the coupling
+  // removed, reportHeight() no longer needs — and should not regain — any
+  // additive buffer; plain scrollHeight is now safe AND accurate.
   const styleOverride = document.createElement('style');
-  styleOverride.textContent = '.app{max-width:1000px}';
+  styleOverride.textContent = '.app{max-width:1000px} body{min-height:auto}';
   document.head.appendChild(styleOverride);
 
   // ── Auto-height reporting (09/09/2026, updated 10/09/2026) ─────────────
