@@ -1126,11 +1126,28 @@ window.addEventListener('resize',()=>{ clearTimeout(window._rsz); window._rsz=se
   // was invisible to ResizeObserver), is the most plausible remaining
   // explanation, and matches a classic icon-font FOUT/FOIT pattern. Fix:
   // also re-report once document.fonts.ready resolves — safe regardless of
-  // timing relative to the rest of this bridge — plus a small +6px buffer
-  // as cheap insurance against any other similarly-timed late reflow this
-  // sandbox can't reproduce.
+  // timing relative to the rest of this bridge (the promise resolves
+  // immediately if fonts are already loaded, so this never delays or
+  // double-triggers anything on a normal load).
+  //
+  // CORRECTED same day (10/09/2026): the first version of this fix also
+  // added a flat +6px buffer to every reported height. That buffer created
+  // a genuine infinite-growth regression: body{min-height:100vh} in this
+  // module's own CSS makes 100vh (and so the body's minimum height) track
+  // the iframe's OWN currently-assigned height. Each reportHeight() call
+  // was feeding height+6 back to the shell, which set the iframe height
+  // accordingly, which raised 100vh inside the iframe by the same +6,
+  // which ResizeObserver saw as new growth and re-reported +6 again —
+  // an unbounded loop, one visible symptom being the outer page growing
+  // taller indefinitely. Removed the buffer entirely; reporting plain
+  // scrollHeight lets the loop settle at its natural fixed point (the
+  // point where scrollHeight already equals the iframe's current height,
+  // so ResizeObserver has nothing new to report) exactly as it did before
+  // today's changes. The document.fonts.ready re-report above is unaffected
+  // and kept, since it fires once per font-load event rather than being
+  // part of this feedback path.
   function reportHeight(){
-    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M1', height: document.documentElement.scrollHeight + 6 }, '*');
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M1', height: document.documentElement.scrollHeight }, '*');
   }
   new ResizeObserver(reportHeight).observe(document.documentElement);
   reportHeight();

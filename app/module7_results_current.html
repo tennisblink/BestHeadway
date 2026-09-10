@@ -912,10 +912,12 @@ function toast(msg){
 
   // ── Auto-height reporting (09/09/2026, updated 10/09/2026) ─────────────
   // See M4's bridge comment above for the full rationale — same mechanism,
-  // same 10/09/2026 addition of the document.fonts.ready re-report and the
-  // +6px buffer, applied identically here.
+  // same 10/09/2026 addition of the document.fonts.ready re-report, and
+  // the same-day correction that removed a buggy +6px height buffer
+  // (infinite-growth regression, see M1's comment for the root cause),
+  // applied identically here.
   function reportHeight(){
-    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M7', height: document.documentElement.scrollHeight + 6 }, '*');
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M7', height: document.documentElement.scrollHeight }, '*');
   }
   new ResizeObserver(reportHeight).observe(document.documentElement);
   reportHeight();

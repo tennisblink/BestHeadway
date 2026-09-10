@@ -365,9 +365,11 @@ refreshPreview();
 
   // ── Auto-height reporting (09/09/2026, updated 10/09/2026) ─────────────
   // Same mechanism as M1's bridge — see that file's comment for why,
-  // including the 10/09/2026 document.fonts.ready + buffer addition.
+  // including the 10/09/2026 document.fonts.ready addition and the
+  // same-day correction that removed a buggy +6px height buffer
+  // (infinite-growth regression, see M1's comment for the root cause).
   function reportHeight(){
-    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M2', height: document.documentElement.scrollHeight + 6 }, '*');
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M2', height: document.documentElement.scrollHeight }, '*');
   }
   new ResizeObserver(reportHeight).observe(document.documentElement);
   reportHeight();

@@ -609,12 +609,16 @@ function toast(msg){
   // pixels short of the true content height, showing up as a faint inner
   // scrollbar. document.fonts.ready resolves once regardless of timing
   // relative to the rest of this bridge, so this call is safe whether the
-  // font already loaded or not. The +6px buffer is a small, cheap margin
-  // against any other similarly-timed late reflow this sandbox can't
-  // reproduce (see claude/PROJECT_STATE.md, 10/09/2026 entry, for the
-  // diagnostic work behind this fix).
+  // font already loaded or not.
+  //
+  // CORRECTED same day (10/09/2026): the first version of this fix also
+  // added a flat +6px buffer to every reported height, which caused a
+  // genuine infinite-growth regression — see M1's bridge comment above for
+  // the full root-cause writeup (body{min-height:100vh} + the iframe's own
+  // assigned height feeding back into itself). Buffer removed; plain
+  // scrollHeight is reported, same as before today's changes.
   function reportHeight(){
-    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M4', height: document.documentElement.scrollHeight + 6 }, '*');
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M4', height: document.documentElement.scrollHeight }, '*');
   }
   new ResizeObserver(reportHeight).observe(document.documentElement);
   reportHeight();
