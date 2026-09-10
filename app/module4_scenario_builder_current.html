@@ -596,12 +596,31 @@ function toast(msg){
   styleOverride.textContent = '.app{max-width:1000px}';
   document.head.appendChild(styleOverride);
 
-  // ── Auto-height reporting (09/09/2026) ────────────────────────────────
+  // ── Auto-height reporting (09/09/2026, updated 10/09/2026) ─────────────
+  // Reports this document's actual height to the shell so the iframe can be
+  // sized to fit exactly. Re-measures on any layout change (ResizeObserver)
+  // and whenever the shell asks after making this the visible step
+  // (REQUEST_RESIZE, double rAF above). Added 10/09/2026: also re-report
+  // once the tabler-icons webfont actually finishes loading — on the real
+  // deployed site that font loads asynchronously from a CDN, and if it
+  // swaps in after the REQUEST_RESIZE measurement already ran (while this
+  // module's iframe was still hidden, so the font-driven reflow was
+  // invisible to ResizeObserver), the reported height could be a few
+  // pixels short of the true content height, showing up as a faint inner
+  // scrollbar. document.fonts.ready resolves once regardless of timing
+  // relative to the rest of this bridge, so this call is safe whether the
+  // font already loaded or not. The +6px buffer is a small, cheap margin
+  // against any other similarly-timed late reflow this sandbox can't
+  // reproduce (see claude/PROJECT_STATE.md, 10/09/2026 entry, for the
+  // diagnostic work behind this fix).
   function reportHeight(){
-    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M4', height: document.documentElement.scrollHeight }, '*');
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M4', height: document.documentElement.scrollHeight + 6 }, '*');
   }
   new ResizeObserver(reportHeight).observe(document.documentElement);
   reportHeight();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(reportHeight);
+  }
 })();
 </script>
 </body>

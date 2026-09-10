@@ -763,12 +763,18 @@ function toast(msg){
   styleOverride.textContent = '.app{max-width:1000px}';
   document.head.appendChild(styleOverride);
 
-  // ── Auto-height reporting (09/09/2026) ────────────────────────────────
+  // ── Auto-height reporting (09/09/2026, updated 10/09/2026) ─────────────
+  // See M4's bridge comment above for the full rationale — same mechanism,
+  // same 10/09/2026 addition of the document.fonts.ready re-report and the
+  // +6px buffer, applied identically here.
   function reportHeight(){
-    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M5', height: document.documentElement.scrollHeight }, '*');
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M5', height: document.documentElement.scrollHeight + 6 }, '*');
   }
   new ResizeObserver(reportHeight).observe(document.documentElement);
   reportHeight();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(reportHeight);
+  }
 })();
 </script>
 </body>

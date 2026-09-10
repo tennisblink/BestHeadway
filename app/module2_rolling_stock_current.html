@@ -238,7 +238,7 @@ function loadParams(ev){
       statusEl.innerHTML = `<span class="badge-ok"><i class="ti ti-check"></i> Loaded ${esc(file.name)}</span>`;
       toast('Loaded ' + file.name);
     } catch(err){
-      alert('Could not load file: ' + err.message + '\\n\\nExpected a sim_parameters.json file with "rollingStock" and "signalling" sections.');
+      alert('Could not load file: ' + err.message + '\n\nExpected a sim_parameters.json file with "rollingStock" and "signalling" sections.');
     }
   };
   reader.readAsText(file);
@@ -363,13 +363,17 @@ refreshPreview();
   styleOverride.textContent = '.app{max-width:1000px}';
   document.head.appendChild(styleOverride);
 
-  // ── Auto-height reporting (09/09/2026) ────────────────────────────────
-  // Same mechanism as M1's bridge — see that file's comment for why.
+  // ── Auto-height reporting (09/09/2026, updated 10/09/2026) ─────────────
+  // Same mechanism as M1's bridge — see that file's comment for why,
+  // including the 10/09/2026 document.fonts.ready + buffer addition.
   function reportHeight(){
-    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M2', height: document.documentElement.scrollHeight }, '*');
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M2', height: document.documentElement.scrollHeight + 6 }, '*');
   }
   new ResizeObserver(reportHeight).observe(document.documentElement);
   reportHeight();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(reportHeight);
+  }
 })();
 </script>
 </body>

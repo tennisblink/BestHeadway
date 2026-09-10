@@ -1101,17 +1101,42 @@ window.addEventListener('resize',()=>{ clearTimeout(window._rsz); window._rsz=se
   styleOverride.textContent = '.app{max-width:1000px}';
   document.head.appendChild(styleOverride);
 
-  // ── Auto-height reporting (09/09/2026) ────────────────────────────────
+  // ── Auto-height reporting (09/09/2026, updated 10/09/2026) ─────────────
   // Reports this document's actual height to the shell so the iframe can be
   // sized to fit exactly — avoids a scrollbar inside the iframe stacked on
   // top of the shell page's own scrollbar. Re-measures on any layout change
   // (adding/removing tracks or rows, expanding a crossover's detail panel,
-  // toggling chainage jumps, etc.), not just once on load.
+  // toggling chainage jumps, etc.), not just once on load, and whenever the
+  // shell asks after making this the visible step (REQUEST_RESIZE, double
+  // rAF above).
+  //
+  // Added 10/09/2026: the double-rAF REQUEST_RESIZE fix did not fully
+  // resolve a residual real-world double-scrollbar report from the user.
+  // Root-cause work this session (see claude/PROJECT_STATE.md, 10/09/2026
+  // entry) built a Playwright harness reproducing this exact bridge/shell
+  // cycle and could not reproduce a measurement gap under any tested
+  // condition (various widths, realistic populated content, repeated
+  // hide/show cycles, content growing while hidden) — the mechanism above
+  // is never wrong in isolation. The one thing the sandbox used for that
+  // testing structurally cannot exercise is the tabler-icons webfont
+  // (loaded via CDN in every module's <head>) actually finishing an async
+  // load — confirmed blocked there by network egress. An icon webfont
+  // swapping in after the REQUEST_RESIZE measurement already ran, while
+  // this module's iframe was still display:none (so the resulting reflow
+  // was invisible to ResizeObserver), is the most plausible remaining
+  // explanation, and matches a classic icon-font FOUT/FOIT pattern. Fix:
+  // also re-report once document.fonts.ready resolves — safe regardless of
+  // timing relative to the rest of this bridge — plus a small +6px buffer
+  // as cheap insurance against any other similarly-timed late reflow this
+  // sandbox can't reproduce.
   function reportHeight(){
-    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M1', height: document.documentElement.scrollHeight }, '*');
+    window.parent.postMessage({ type:'MODULE_RESIZE', module:'M1', height: document.documentElement.scrollHeight + 6 }, '*');
   }
   new ResizeObserver(reportHeight).observe(document.documentElement);
   reportHeight();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(reportHeight);
+  }
 })();
 </script>
 </body>
