@@ -61,7 +61,7 @@ body{font-family:system-ui,sans-serif;font-size:14px;background:var(--color-back
 .track-card-hdr{background:var(--color-background-secondary,#f5f5f3);padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
 .track-card-hdr:hover{background:#e8e8e6}
 .track-card-body{padding:14px;border-top:0.5px solid rgba(0,0,0,.08)}
-.track-fields{display:grid;grid-template-columns:1fr 2fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px;align-items:end}
+.track-fields{display:grid;grid-template-columns:1fr 2fr 1fr 1fr;gap:8px;margin-bottom:12px;align-items:end}
 .fg{display:flex;flex-direction:column;gap:3px}
 .fg label{font-size:11px;color:#666;font-weight:500}
 .fg input,.fg select{padding:5px 8px;border:0.5px solid rgba(0,0,0,.2);border-radius:7px;font-size:12px;font-family:inherit;background:var(--color-background-primary,#fff);color:var(--color-text-primary,#1a1a1a)}
@@ -488,6 +488,15 @@ svg.xoex .row{stroke:#ddd;stroke-width:1}
 // Step 1 or the saved JSON — this also lets a crossover that connects two
 // non-adjacent tracks (e.g. XO-001: NB↔T3, skipping SB) be moved so it no
 // longer visually cuts through an unrelated track's line.
+// 22/09/2026 (2): CH-019 direction convention decoupled from track naming —
+// Signal direction is now a dropdown storing only 'up'/'down' (previously
+// free text, e.g. 'NB'/'SB'), since a track's own name/ID is arbitrary
+// (could be "East"/"West") and direction shouldn't be tied to it. The Track
+// object's own `direction` field (previously 'northbound'/'southbound') is
+// removed entirely — it was read nowhere outside M1's own schematic fallback
+// and tracks are physically bi-directional, so it had no real meaning.
+// signalIsUp() still recognizes legacy NB/SB/north/south values for
+// backward-compatible rendering of older track_layout.json files.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const STATE = {
@@ -552,6 +561,21 @@ function refreshAllTrackDropdowns(){
 // ── Utility ───────────────────────────────────────────────────────────────
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 function T(s){ return String(s||'').trim(); }
+
+// CH-019: Signal direction is stored as 'up'/'down' (track-name-independent —
+// decoupled from whatever a track happens to be called, e.g. NB/SB/East/West).
+// signalIsUp() also recognizes legacy free-text values (NB/SB/north/south, as
+// used by files saved before CH-019) purely from the signal's own direction
+// string, so an older track_layout.json still renders correctly in the
+// schematic without needing to be hand-edited. New signals, via the Step 3
+// dropdown, only ever store the clean 'up'/'down' values. Mirrors M3's own
+// openDirModal() -> suggest() mapping so both modules agree on legacy values.
+function signalIsUp(dir){
+  const dl=String(dir||'').toLowerCase();
+  if(dl==='up'||dl==='nb'||dl.includes('north')||dl.includes('up')) return true;
+  if(dl==='down'||dl==='sb'||dl.includes('south')||dl.includes('down')) return false;
+  return true; // unrecognized value — same default-to-up fallback as M3
+}
 function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg; el.classList.add('show');
@@ -576,7 +600,6 @@ function addTrack(data=null){
     name: name,
     chainage_start: data?data.chainage_start:0,
     chainage_end: data?data.chainage_end:25000,
-    direction: data?data.direction:(trackCounter===1?'northbound':'southbound'),
     color: color,
     chainage_jumps: data?data.chainage_jumps:[],
     _expanded: true
@@ -634,9 +657,6 @@ function renderTrackCard(tr){
         </div>
         <div class="fg"><label>CH End (m)</label>
           <input type="number" value="${tr.chainage_end}" onchange="updateTrack('${tr._uid}','chainage_end',+this.value)">
-        </div>
-        <div class="fg"><label>Direction</label>
-          <input type="text" value="${esc(tr.direction)}" onchange="updateTrack('${tr._uid}','direction',this.value)">
         </div>
       </div>
 
@@ -925,7 +945,10 @@ function addRow(type, data=null){
       <td><input type="text" value="${esc(data?data.signal_id:nextSignalId())}" placeholder="S001"></td>
       <td><select class="track-sel">${getTrackOptions()}</select></td>
       <td><input type="number" value="${data?data.chainage:''}" placeholder="280"></td>
-      <td><input type="text" value="${esc(data?data.direction:'NB')}" placeholder="NB or SB"></td>
+      <td><select>
+        <option value="up"   ${(!data||signalIsUp(data.direction))?'selected':''}>up</option>
+        <option value="down" ${(data&&!signalIsUp(data.direction))?'selected':''}>down</option>
+      </select></td>
       <td><select>
         <option value="physical" ${data&&data.type==='physical'?'selected':''}>Physical</option>
         <option value="virtual"  ${data&&data.type==='virtual' ?'selected':''}>Virtual</option>
@@ -1344,11 +1367,11 @@ function drawSchematic(){
   });
 
   // ── Signals ──────────────────────────────────────────────────────────
-  // Convention: NB (left→right travel) → post rises above track, arm points right  |-O
-  //             SB (right→left travel) → post drops below track, arm points left   O-|
+  // Convention: up (increasing-chainage travel)   → post rises above track, arm points right  |-O
+  //             down (decreasing-chainage travel) → post drops below track, arm points left   O-|
   // Post: 10px, arm: 10px, head: solid red dot r=4
-  // CH-001: the signal ID is written above the head (NB-style) or below the
-  // head (SB-style); on overlap the label moves one 11px layer further out.
+  // CH-001: the signal ID is written above the head (up-style) or below the
+  // head (down-style); on overlap the label moves one 11px layer further out.
   function drawSignalLabel(text, cx, baseY, outSign){
     ctx.font='10px system-ui'; ctx.textAlign='center';
     const w=ctx.measureText(text).width;
@@ -1370,11 +1393,10 @@ function drawSchematic(){
     const y=meta.y;
     const HALF_TRACK=TRACK_H/2;
     const POST=10, ARM=10, HEAD_R=4;
-    // Determine direction: NB = arm right, post above; SB = arm left, post below
-    const dir=s.direction.toUpperCase();
-    const isNB = dir.includes('N') || (!dir.includes('S') && meta.tr.direction.toLowerCase().includes('north'));
+    // Determine direction: up = arm right, post above; down = arm left, post below
+    const isUp = signalIsUp(s.direction);
     ctx.strokeStyle='#A32D2D'; ctx.lineWidth=2; ctx.setLineDash([]);
-    if(isNB){
+    if(isUp){
       // Post: from top of track upward
       const postTop = y - HALF_TRACK - POST;
       ctx.beginPath(); ctx.moveTo(x, y-HALF_TRACK); ctx.lineTo(x, postTop); ctx.stroke();
