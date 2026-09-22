@@ -29,6 +29,11 @@ body{font-family:system-ui,sans-serif;font-size:14px;background:var(--color-back
 .upload-zone .uz-icon{font-size:28px;display:block;margin-bottom:8px;opacity:.5}
 .upload-zone strong{font-size:14px;display:block;margin-bottom:4px}
 
+/* Step 1 action row + direction mapping summary — CH-020 */
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:disabled:hover{background:#fff}
+.btn-primary:disabled:hover{background:#185FA5}
+
 /* Manual CSV link */
 .manual-toggle{font-size:12px;color:#185FA5;cursor:pointer;text-decoration:underline;text-underline-offset:2px;display:inline-block;margin-top:10px}
 .manual-toggle:hover{color:#0C447C}
@@ -117,6 +122,18 @@ ul.err-list{margin:6px 0 0 16px;line-height:1.8}
     <strong>track_layout.json</strong>
     <span style="font-size:12px;color:#888">Drag &amp; drop or click to upload</span>
     <input type="file" id="inp-json" accept=".json" style="display:none" onchange="loadJson(event)">
+  </div>
+
+  <!-- Step 1 actions — CH-020: staged data only becomes routes once the
+       user explicitly clicks Derive; Reload re-pulls from Module 1 without
+       popping any dialog. Hidden until a layout is staged. -->
+  <div class="btn-row" id="step1-actions" style="display:none">
+    <button class="btn" id="btn-reload-m1" onclick="reloadFromM1()"><i class="ti ti-refresh"></i> Reload from Module 1</button>
+    <button class="btn btn-primary" id="btn-derive" onclick="deriveRoutes()" disabled><i class="ti ti-wand"></i> Derive Routes From Layout</button>
+  </div>
+  <div class="info-box ib" id="dir-summary" style="display:none">
+    <i class="ti ti-arrows-exchange"></i>
+    <div><span id="dir-summary-text"></span> &nbsp;·&nbsp; <span class="manual-toggle" style="margin:0" onclick="openDirModal()">Edit mapping</span></div>
   </div>
 
   <!-- Manual CSV — subtle secondary path -->
@@ -218,12 +235,12 @@ ul.err-list{margin:6px 0 0 16px;line-height:1.8}
 <!-- ═══ DIRECTION MAPPING MODAL ═══ -->
 <div class="modal-bg" id="dir-modal">
   <div class="modal">
-    <h2><i class="ti ti-arrows-exchange" style="margin-right:6px"></i>Confirm direction mapping</h2>
-    <p>The following direction values were found in your track layout. Map each one to <strong>up</strong> or <strong>down</strong> before extracting routes.</p>
+    <h2><i class="ti ti-arrows-exchange" style="margin-right:6px"></i>Edit direction mapping</h2>
+    <p>These direction values were found in your track layout, auto-mapped to <strong>up</strong>/<strong>down</strong>. Adjust any of them, then Save — you'll still need to click <strong>Derive Routes From Layout</strong> afterwards to apply the change.</p>
     <div id="dir-map-rows"></div>
     <div class="btn-row" style="margin-top:16px;justify-content:flex-end">
       <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmMapping()"><i class="ti ti-wand"></i> Extract routes</button>
+      <button class="btn btn-primary" onclick="confirmMapping()"><i class="ti ti-device-floppy"></i> Save mapping</button>
     </div>
   </div>
 </div>
@@ -252,6 +269,31 @@ const CHAINAGE_OFFSETS = {
 };
 // Default offset for any track not listed above
 const CHAINAGE_OFFSET_DEFAULT = 0;
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// 22/09/2026 — CH-020: three UX changes to how a track layout becomes routes.
+// (1) "Reload from Module 1" button (Step 1): only wired up when this file
+//     runs inside the shell (see the bridge script below) — re-pulls the
+//     shell's current STATE.trackLayout on demand. Unlike the shell's normal
+//     one-per-pristine-visit auto-fill (which stops once this module has
+//     emitted its own MODULE_OUTPUT), this always fetches the latest data,
+//     so editing the layout back in M1 and returning here can be refreshed
+//     without losing already-derived routes. The refresh is silent — it
+//     re-stages the layout exactly like a fresh upload, but does not pop
+//     the direction modal or re-derive on its own.
+// (2) "Derive Routes From Layout" button (Step 1): the ONLY thing that now
+//     triggers extractFromLayout(). Loading a layout — by upload, by the
+//     shell's auto-fill, or via Reload — only stages it (stageLayout()):
+//     updates the upload-zone display and the direction-mapping summary,
+//     nothing more. Previously, loading a layout auto-opened the direction
+//     modal and confirming it immediately extracted routes.
+// (3) Direction mapping is auto-computed on staging via the same suggest()
+//     heuristic the modal already used (renamed suggestDir()), shown as a
+//     one-line summary ("Direction mapping: NB → up, SB → down") next to
+//     the Derive button. The modal is no longer popped automatically; an
+//     "Edit mapping" link opens it as a manual override tool. Saving the
+//     modal updates the mapping/summary only — Derive still has to be
+//     clicked (again) to apply it.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── In-memory state ────────────────────────────────────────────────────────
@@ -309,33 +351,57 @@ function parseJson(file){
       const uz=document.getElementById('uz-json');
       uz.classList.add('loaded');
       uz.innerHTML=`<i class="ti ti-check uz-icon" style="opacity:1"></i><strong>${esc(file.name)}</strong><span style="font-size:12px;display:block;margin-top:2px">${(layout.signals||[]).length} signals · ${(layout.tracks||[]).length} tracks · ${(layout.crossovers||[]).length} crossovers</span>`;
-      openDirModal();
+      stageLayout();
     }catch(err){ alert('Error reading JSON: '+err.message); }
   };
   reader.readAsText(file);
 }
 
-// ── Direction mapping modal ────────────────────────────────────────────────
-function openDirModal(){
+// ── CH-020: staging — loading a layout (upload, shell auto-fill, or the
+// Reload button) only gets it ready for extraction; it never pops the
+// direction modal and never extracts on its own. ────────────────────────────
+function suggestDir(d){
+  const dl=d.toLowerCase();
+  if(dl==='up'||dl==='nb'||dl.includes('north')||dl.includes('up')) return 'up';
+  if(dl==='down'||dl==='sb'||dl.includes('south')||dl.includes('down')) return 'down';
+  return 'up';
+}
+function stageLayout(){
+  // Fresh layout → fresh auto-mapping (any manual edit made via "Edit
+  // mapping" for a previous layout does not carry over to a new one).
+  dirMapping = {};
   const dirValues=[...new Set((layout.signals||[]).map(s=>t(s.direction)).filter(Boolean))];
-  function suggest(d){
-    const dl=d.toLowerCase();
-    if(dl==='up'||dl==='nb'||dl.includes('north')||dl.includes('up')) return 'up';
-    if(dl==='down'||dl==='sb'||dl.includes('south')||dl.includes('down')) return 'down';
-    return 'up';
-  }
+  dirValues.forEach(d=>{ dirMapping[d]=suggestDir(d); });
+  dirMapping._keys=dirValues;
+  renderDirSummary();
+  document.getElementById('step1-actions').style.display='flex';
+  document.getElementById('btn-derive').disabled=false;
+}
+function renderDirSummary(){
+  const box=document.getElementById('dir-summary');
+  const keys=dirMapping._keys||[];
+  if(!keys.length){ box.style.display='none'; return; }
+  document.getElementById('dir-summary-text').innerHTML=
+    'Direction mapping: '+keys.map(d=>`<strong>${esc(d)}</strong> → ${dirMapping[d]}`).join(', ');
+  box.style.display='flex';
+}
+
+// ── Direction mapping modal — now a manual override tool ("Edit mapping"),
+// no longer auto-opened when a layout loads. ────────────────────────────────
+function openDirModal(){
+  if(!layout){ toast('Load a track layout first.'); return; }
+  const dirValues=dirMapping._keys||[];
   const rows=dirValues.map(d=>`
     <div class="map-row">
       <span class="raw">${esc(d)}</span>
       <i class="ti ti-arrow-right"></i>
       <select id="dirmap-${esc(d)}">
-        <option value="up" ${suggest(d)==='up'?'selected':''}>up</option>
-        <option value="down" ${suggest(d)==='down'?'selected':''}>down</option>
+        <option value="up" ${dirMapping[d]==='up'?'selected':''}>up</option>
+        <option value="down" ${dirMapping[d]==='down'?'selected':''}>down</option>
       </select>
     </div>`).join('');
   document.getElementById('dir-map-rows').innerHTML=rows||'<p style="color:#aaa;font-size:12px">No direction values found in signals.</p>';
   document.getElementById('dir-modal').classList.add('open');
-  dirMapping._keys=dirValues;
 }
 function closeModal(){
   document.getElementById('dir-modal').classList.remove('open');
@@ -346,10 +412,24 @@ function confirmMapping(){
     if(sel) dirMapping[d]=sel.value;
   });
   closeModal();
-  extractFromLayout();
+  renderDirSummary();
+  toast('Mapping saved — click "Derive Routes From Layout" to apply it.');
 }
 function mapDir(rawDir){
   return dirMapping[t(rawDir)]||null; // null = unmapped → excluded from routes
+}
+
+// ── CH-020: single explicit trigger for extraction ──────────────────────────
+function deriveRoutes(){
+  if(!layout){ toast('Load a track layout first.'); return; }
+  extractFromLayout();
+}
+
+// ── CH-020: "Reload from Module 1" — standalone-mode stub. When this file
+// runs inside the shell, the bridge script below overrides this with the
+// real implementation (posts REQUEST_TRACK_LAYOUT to the shell). ───────────
+function reloadFromM1(){
+  toast('Reload is only available inside the app.');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -997,10 +1077,18 @@ function downloadCsv(type){
 //
 // Input: on the shell's one-time STATE_UPDATE, if STATE.trackLayout is
 // present, this replicates the real upload flow — set `layout` and the
-// upload-zone UI exactly as parseJson() would, then open the direction-
-// mapping modal so the user still confirms up/down mapping before routes
-// are extracted (confirmed 09/09/2026: keep this manual step even when the
-// track layout arrives via the shell rather than a file).
+// upload-zone UI exactly as parseJson() would, then STAGE it (CH-020,
+// 22/09/2026: previously opened the direction-mapping modal automatically;
+// now it only stages, same as any other way of loading a layout — see the
+// CH-020 comment in the module's own script above).
+//
+// 22/09/2026 — CH-020: also overrides reloadFromM1() (a no-op stub in the
+// module's own script, standalone-only) with the real implementation: posts
+// REQUEST_TRACK_LAYOUT to the shell, which replies with a targeted
+// STATE_UPDATE carrying its current STATE.trackLayout — reusing the exact
+// STATE_UPDATE handling below, so no new message handling is needed here.
+// Unlike the shell's normal pristine-only auto-fill, this reply always goes
+// out regardless of whether M3 has already emitted MODULE_OUTPUT.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
   if (window.parent === window) return; // standalone mode — bridge inactive
@@ -1020,6 +1108,11 @@ function downloadCsv(type){
     sendOutput();
   };
 
+  // Module → shell: manual "Reload from Module 1" button (CH-020).
+  reloadFromM1 = function(){
+    window.parent.postMessage({ type:'REQUEST_TRACK_LAYOUT', module:'M3' }, '*');
+  };
+
   // Shell → module: pre-fill from STATE.trackLayout, same as a real upload.
   function applyTrackLayout(trackLayoutData){
     if (!trackLayoutData) return;
@@ -1027,7 +1120,7 @@ function downloadCsv(type){
     const uz = document.getElementById('uz-json');
     uz.classList.add('loaded');
     uz.innerHTML = `<i class="ti ti-check uz-icon" style="opacity:1"></i><strong>track_layout.json (from Module 1)</strong><span style="font-size:12px;display:block;margin-top:2px">${(layout.signals||[]).length} signals · ${(layout.tracks||[]).length} tracks · ${(layout.crossovers||[]).length} crossovers</span>`;
-    openDirModal();
+    stageLayout();
   }
 
   window.addEventListener('message', function(ev){

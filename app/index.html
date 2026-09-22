@@ -231,6 +231,19 @@ body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,
 //     overwrites edits the user has made locally but not yet "saved" inside
 //     that module. See maybeSendAutoFill() below.
 //
+//   - 22/09/2026 (CH-021, M3): REQUEST_TRACK_LAYOUT — a module can ask, on
+//     demand, for the shell's current STATE.trackLayout regardless of
+//     whether it has already emitted its own MODULE_OUTPUT (which is what
+//     normally stops maybeSendAutoFill() from sending it anything more).
+//     Added for M3's manual "Reload from Module 1" button: M3 may have
+//     already derived routes once (so it's no longer "pristine") but the
+//     user has since gone back and changed the layout in M1, and wants to
+//     manually pull the update without losing already-derived routes by
+//     leaving/re-entering the step. Reply is targeted at the requesting
+//     module's own iframe only, reusing the existing STATE_UPDATE handling
+//     each module's bridge already has — no new message type needed on the
+//     module side.
+//
 // All 7 modules (M1-M7) have real module files and are wired in.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -368,6 +381,12 @@ const frames = {};    // module key -> iframe element (only for built modules)
 // fields it has already locally loaded (checks its own LOADED-style flags
 // before overwriting), so a re-send that arrives with data the module
 // already has is a safe no-op for those fields.
+//
+// 22/09/2026 — CH-021 note: this pristine-gated auto-fill is intentionally
+// left as-is. A module that wants fresher upstream data on demand, even
+// after it has stopped being "pristine", asks for it explicitly instead —
+// see REQUEST_TRACK_LAYOUT in the message listener below (added for M3's
+// "Reload from Module 1" button) rather than loosening this gate globally.
 function maybeSendAutoFill(key){
   if(!moduleReady[key] || moduleHasOutput[key]) return;
   if(STEPS[active].key !== key) return; // only the currently visible step
@@ -530,6 +549,23 @@ window.addEventListener('message', (ev)=>{
       log(`${msg.module} → MODULE_OUTPUT`);
       renderStepper();
       renderStateJson();
+    }
+    return;
+  }
+
+  if(msg.type === 'REQUEST_TRACK_LAYOUT'){
+    // Manual "Reload from Module 1" button (M3, 22/09/2026, CH-021): unlike
+    // maybeSendAutoFill(), this always replies with the shell's current
+    // STATE.trackLayout, targeted at the requesting module's own iframe
+    // only — bypassing moduleHasOutput[] so a module that has already
+    // produced output (and so stopped receiving further auto-fills) can
+    // still manually pull the latest track layout on demand. Reuses the
+    // existing STATE_UPDATE handling each module's bridge already has, so
+    // no new message type is needed on the module side.
+    const frame = frames[msg.module];
+    if(frame){
+      frame.contentWindow.postMessage({ type:'STATE_UPDATE', payload: { trackLayout: STATE.trackLayout } }, '*');
+      log(`shell → ${msg.module}: STATE_UPDATE (manual reload${STATE.trackLayout?'':' — trackLayout is null'})`);
     }
     return;
   }
