@@ -97,8 +97,22 @@ canvas#schematic{display:block;cursor:crosshair}
 .xo-fg label{font-size:10px;color:#888;font-weight:500}
 .xo-fg input,.xo-fg select{padding:4px 7px;border:0.5px solid rgba(0,0,0,.2);border-radius:6px;font-size:11px;font-family:inherit;background:var(--color-background-primary,#fff);color:var(--color-text-primary,#1a1a1a);width:100%}
 .xo-fg input:focus,.xo-fg select:focus{outline:none;border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.12)}
+.xo-fg select:disabled{background:#f0f0ee;color:#555;cursor:not-allowed;opacity:1}
 .xo-expand-btn{padding:2px 8px;font-size:10px;border-radius:5px;border:0.5px solid rgba(24,95,165,.4);background:#E6F1FB;color:#185FA5;cursor:pointer;white-space:nowrap}
 .xo-expand-btn:hover{background:#d0e4f7}
+.xo-detail-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;font-size:11px;color:#666}
+
+/* ── Crossover validation messages ── */
+.xo-val{display:flex;flex-direction:column;gap:3px;padding:2px 0 4px}
+.xo-msg{font-size:11px;line-height:1.5;padding:3px 8px;border-radius:5px}
+.xo-msg.err{background:#FCEBEB;color:#A32D2D}
+.xo-msg.warn{background:#FAEEDA;color:#854F0B}
+
+/* ── Crossover example (expandable) ── */
+details.xo-example{margin-top:8px}
+details.xo-example summary{cursor:pointer;font-weight:600;user-select:none}
+.xo-example-body{margin-top:8px;overflow-x:auto}
+svg.xoex{display:block;width:100%;min-width:640px;max-width:1000px;height:auto;background:#fff;border:0.5px solid rgba(0,0,0,.15);border-radius:8px}
 
 /* ── Toast ── */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:999}
@@ -212,7 +226,121 @@ canvas#schematic{display:block;cursor:crosshair}
   <div class="tab-panel" id="tab-crossovers">
     <div class="info-box ib" style="margin-bottom:10px">
       <i class="ti ti-info-circle"></i>
-      <div>Each crossover connects two turnouts on different tracks. Both mainline and crossing sides of the same turnout share the same chainage system. A chainage jump between the two turnouts captures the surveying discontinuity between the two mainline chainage systems. Expand each row to enter turnout geometry and the crossing chainage jump.</div>
+      <div style="min-width:0;flex:1">
+        Each crossover connects two turnouts on different tracks. Both mainline and crossing sides of the same turnout share the same chainage system. A chainage jump between the two turnouts captures the surveying discontinuity between the two mainline chainage systems. Expand each row to enter turnout geometry and the crossing chainage jump.
+        <br><br>
+        <strong>Turnout A / Turnout B convention:</strong> Turnout A is the turnout at the lower chainage side and extends toward increasing chainage; Turnout B is the turnout at the higher chainage side and extends toward decreasing chainage. Turnout A may be on either track. This convention is not enforced; it only sets the direction of the default values below.
+        <br><br>
+        <strong>Auto-fill:</strong> when you enter a turnout chainage, the empty geometry fields of that turnout are filled with defaults (toe = turnout chainage; blade zone = toe ± 30 m; fouling point = blade zone ± 10 m; jump chainage = fouling point ± 10 m; Turnout A adds, Turnout B subtracts). Main and crossing values default to the same number and can be edited separately. The jump tracks always follow the Turnout A / B tracks. Existing values are never overwritten; use <strong>Recalculate</strong> in the crossover's detail panel to overwrite all fields with the defaults.
+        <br><br>
+        <strong>Validation:</strong> each crossover is checked as you type. Errors (red) and warnings (amber) appear under its row. They do not block saving.
+        <details class="xo-example">
+          <summary>Example</summary>
+          <div class="xo-example-body"><svg class="xoex" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 670" role="img" aria-label="Crossover geometry worked example" font-family="system-ui, Segoe UI, Helvetica, Arial, sans-serif">
+<style>
+svg.xoex text{fill:#1a1a1a;font-size:12px}
+svg.xoex .s{font-size:10.5px}
+svg.xoex .m{fill:#666}
+svg.xoex .b{font-weight:600}
+svg.xoex .a{fill:#185FA5}
+svg.xoex .o{fill:#B45A14}
+svg.xoex .t{font-size:15px;font-weight:600}
+svg.xoex .trk{stroke:#444;stroke-width:4}
+svg.xoex .guide{stroke:#999;stroke-width:1;stroke-dasharray:3 3}
+svg.xoex .dim{stroke:#444;stroke-width:1.2}
+svg.xoex .row{stroke:#ddd;stroke-width:1}
+</style>
+<rect width="1000" height="670" fill="#fff"/>
+<text x="40" y="24" class="t">Crossover geometry — worked example with default distances</text>
+
+<!-- dimension rows -->
+<line x1="150" y1="52" x2="850" y2="52" class="dim"/>
+<line x1="150" y1="46" x2="150" y2="58" class="dim"/><line x1="850" y1="46" x2="850" y2="58" class="dim"/>
+<text x="500" y="45" text-anchor="middle" class="b">Crossover length = dA + dB = 100 m</text>
+<line x1="150" y1="80" x2="500" y2="80" stroke="#185FA5" stroke-width="1.5"/>
+<line x1="500" y1="80" x2="850" y2="80" stroke="#B45A14" stroke-width="1.5"/>
+<line x1="150" y1="74" x2="150" y2="86" class="dim"/><line x1="500" y1="74" x2="500" y2="86" class="dim"/><line x1="850" y1="74" x2="850" y2="86" class="dim"/>
+<text x="325" y="73" text-anchor="middle" class="a b">dA = 50 m  (30 + 10 + 10)</text>
+<text x="675" y="73" text-anchor="middle" class="o b">dB = 50 m  (30 + 10 + 10)</text>
+<line x1="150" y1="86" x2="150" y2="143" class="guide"/>
+<line x1="500" y1="86" x2="500" y2="241" class="guide"/>
+<line x1="850" y1="86" x2="850" y2="343" class="guide"/>
+
+<!-- tracks -->
+<line x1="60" y1="150" x2="900" y2="150" class="trk"/>
+<line x1="60" y1="350" x2="900" y2="350" class="trk"/>
+<text x="60" y="138" class="b">NB track</text>
+<text x="60" y="338" class="b">SB track</text>
+<text x="900" y="176" text-anchor="end" class="m s">chainage increases to the right (each track has its own chainage system)</text>
+
+<!-- crossing connecting track -->
+<line x1="150" y1="150" x2="500" y2="250" stroke="#185FA5" stroke-width="6" stroke-linecap="round"/>
+<line x1="500" y1="250" x2="850" y2="350" stroke="#B45A14" stroke-width="6" stroke-linecap="round"/>
+
+<!-- main/crossing connectors -->
+<line x1="360" y1="158" x2="360" y2="205" class="guide"/><line x1="430" y1="158" x2="430" y2="225" class="guide"/>
+<line x1="570" y1="275" x2="570" y2="342" class="guide"/><line x1="640" y1="295" x2="640" y2="342" class="guide"/>
+
+<!-- main-side ticks -->
+<line x1="360" y1="141" x2="360" y2="159" stroke="#185FA5" stroke-width="3"/><line x1="430" y1="141" x2="430" y2="159" stroke="#185FA5" stroke-width="3"/>
+<line x1="570" y1="341" x2="570" y2="359" stroke="#B45A14" stroke-width="3"/><line x1="640" y1="341" x2="640" y2="359" stroke="#B45A14" stroke-width="3"/>
+<!-- crossing-side dots -->
+<circle cx="360" cy="210" r="4.5" fill="#185FA5"/><circle cx="430" cy="230" r="4.5" fill="#185FA5"/>
+<circle cx="570" cy="270" r="4.5" fill="#B45A14"/><circle cx="640" cy="290" r="4.5" fill="#B45A14"/>
+<!-- toe circles -->
+<circle cx="150" cy="150" r="7" fill="#fff" stroke="#185FA5" stroke-width="3"/>
+<circle cx="850" cy="350" r="7" fill="#fff" stroke="#B45A14" stroke-width="3"/>
+<!-- jump -->
+<circle cx="500" cy="250" r="9" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/>
+<path d="M491 250 A9 9 0 0 1 509 250" fill="#185FA5"/><path d="M491 250 A9 9 0 0 0 509 250" fill="#B45A14"/>
+
+<!-- labels: Turnout A -->
+<text x="144" y="108" text-anchor="end" class="a b s">Turnout A · toe</text><text x="144" y="122" text-anchor="end" class="s">CH 1000</text>
+<text x="360" y="108" text-anchor="middle" class="s">Blade zone</text><text x="360" y="122" text-anchor="middle" class="s">main 1030</text>
+<text x="430" y="108" text-anchor="middle" class="s">Fouling pt</text><text x="430" y="122" text-anchor="middle" class="s">main 1040</text>
+<text x="352" y="232" text-anchor="end" class="s">Blade zone</text><text x="352" y="246" text-anchor="end" class="s">crossing 1030</text>
+<text x="422" y="266" text-anchor="end" class="s">Fouling pt</text><text x="422" y="280" text-anchor="end" class="s">crossing 1040</text>
+<line x1="430" y1="236" x2="430" y2="270" class="guide"/>
+<!-- labels: Turnout B -->
+<text x="858" y="376" class="o b s">Turnout B · toe</text><text x="858" y="390" class="s">CH 1200</text>
+<text x="640" y="376" text-anchor="middle" class="s">Blade zone</text><text x="640" y="390" text-anchor="middle" class="s">main 1170</text>
+<text x="570" y="376" text-anchor="middle" class="s">Fouling pt</text><text x="570" y="390" text-anchor="middle" class="s">main 1160</text>
+<text x="648" y="254" class="s">Blade zone</text><text x="648" y="268" class="s">crossing 1170</text>
+<text x="578" y="228" class="s">Fouling pt</text><text x="578" y="242" class="s">crossing 1160</text>
+<line x1="570" y1="264" x2="570" y2="234" class="guide"/>
+<!-- jump label -->
+<text x="500" y="286" text-anchor="middle" class="b s">chainage jump</text>
+<text x="500" y="300" text-anchor="middle" class="a s">From CH 1050 (NB)</text>
+<text x="500" y="314" text-anchor="middle" class="o s">To CH 1150 (SB)</text>
+
+<!-- legend -->
+<circle cx="46" cy="424" r="5.5" fill="#fff" stroke="#444" stroke-width="2.5"/><text x="60" y="428" class="s">Toe (= turnout chainage)</text>
+<line x1="226" y1="416" x2="226" y2="432" stroke="#444" stroke-width="3"/><text x="238" y="428" class="s">Main-side point (on the mainline)</text>
+<circle cx="446" cy="424" r="4.5" fill="#444"/><text x="458" y="428" class="s">Crossing-side point (on the connecting track)</text>
+<circle cx="736" cy="424" r="7" fill="#fff" stroke="#1a1a1a" stroke-width="2"/><path d="M729 424 A7 7 0 0 1 743 424" fill="#185FA5"/><path d="M729 424 A7 7 0 0 0 743 424" fill="#B45A14"/><text x="750" y="428" class="s">Chainage jump</text>
+
+<!-- table -->
+<rect x="40" y="450" width="920" height="28" fill="#f0f0ee"/>
+<text x="52" y="469" class="b">M1 input field</text>
+<text x="400" y="469" class="a b">Turnout A (NB, ch 1000)</text>
+<text x="590" y="469" class="o b">Turnout B (SB, ch 1200)</text>
+<text x="780" y="469" class="b">Default (A: +, B: −)</text>
+<text x="52" y="500">Toe CH</text><text x="400" y="500">1000</text><text x="590" y="500">1200</text><text x="780" y="500">= turnout chainage</text>
+<line x1="40" y1="510" x2="960" y2="510" class="row"/>
+<text x="52" y="530">Blade Zone — Main / Crossing CH</text><text x="400" y="530">1030</text><text x="590" y="530">1170</text><text x="780" y="530">toe ± 30 m</text>
+<line x1="40" y1="540" x2="960" y2="540" class="row"/>
+<text x="52" y="560">Fouling Pt — Main / Crossing CH</text><text x="400" y="560">1040</text><text x="590" y="560">1160</text><text x="780" y="560">blade zone ± 10 m</text>
+<line x1="40" y1="570" x2="960" y2="570" class="row"/>
+<text x="52" y="590">Jump CH  (A: From CH · B: To CH)</text><text x="400" y="590">1050</text><text x="590" y="590">1150</text><text x="780" y="590">fouling pt ± 10 m</text>
+
+<!-- notes -->
+<text x="40" y="622" class="s m">Turnout A is the turnout at the lower chainage and extends toward increasing chainage; Turnout B extends toward decreasing chainage.</text>
+<text x="40" y="638" class="s m">NB and SB use independent chainage systems: the jump joins NB ch 1050 and SB ch 1150, which are the same physical point.</text>
+<text x="40" y="654" class="s m">Main and Crossing values default to the same number and can be edited separately. Defaults only fill empty fields; Recalculate overwrites them.</text>
+</svg>
+</div>
+        </details>
+      </div>
     </div>
     <div style="overflow-x:auto">
       <table class="edit-tbl" id="tbl-crossovers">
@@ -321,6 +449,10 @@ canvas#schematic{display:block;cursor:crosshair}
 //   STATE.signals             — flat array
 //
 // Output: track_layout.json
+//
+// 21/09/2026: CH-001 signal name labels on the schematic; CH-002 default
+// signal ID Sxxx; CH-003 crossover validation, auto-fill, Recalculate,
+// Save-toast error count and the expandable Example diagram.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const STATE = {
@@ -334,10 +466,30 @@ const STATE = {
   signals: []
 };
 
+// ── Crossover auto-fill defaults (metres) — CH-003 ────────────────────────
+// Each turnout side is computed from its own summary-row chainage:
+//   toe = chainage; blade zone = toe ± TOE_TO_BLADE; fouling point =
+//   blade zone ± BLADE_TO_FOULING; jump end = fouling point ± FOULING_TO_JUMP.
+// Turnout A adds (+), Turnout B subtracts (−).
+const XO_DEFAULTS = { TOE_TO_BLADE: 30, BLADE_TO_FOULING: 10, FOULING_TO_JUMP: 10 };
+
 // ── ID counters ───────────────────────────────────────────────────────────
 const COUNTERS = { platforms:0, gradients:0, speeds:0, crossovers:0, signals:0, jumps:{} };
 
 function nextId(prefix){ COUNTERS[prefix]=(COUNTERS[prefix]||0)+1; return `${prefix.toUpperCase()}-${String(COUNTERS[prefix]).padStart(3,'0')}`; }
+
+// CH-002: default signal ID = 'S' + 3-digit number. Next number = highest
+// numeric suffix among the signal IDs currently in the table + 1, so a
+// loaded layout never produces a duplicate.
+function nextSignalId(){
+  let max=0;
+  document.querySelectorAll('#tbody-signals tr').forEach(r=>{
+    const inp=r.querySelector('input');
+    const m=inp?String(inp.value).match(/(\d+)\s*$/):null;
+    if(m) max=Math.max(max,parseInt(m[1],10));
+  });
+  return 'S'+String(max+1).padStart(3,'0');
+}
 
 // ── Track helpers ─────────────────────────────────────────────────────────
 function getTrackOptions(includeXO=false){
@@ -389,12 +541,14 @@ function addTrack(data=null){
   STATE.tracks.push(track);
   renderTracks();
   refreshAllTrackDropdowns();
+  scheduleValidate();
 }
 
 function removeTrack(uid){
   STATE.tracks=STATE.tracks.filter(t=>t._uid!==uid);
   renderTracks();
   refreshAllTrackDropdowns();
+  scheduleValidate();
 }
 
 function renderTracks(){
@@ -473,6 +627,7 @@ function updateTrack(uid,field,val){
     if(hdr&&field==='name') hdr.textContent=val;
     refreshAllTrackDropdowns();
   }
+  scheduleValidate();
 }
 
 function toggleJumps(uid){
@@ -550,9 +705,9 @@ function addRow(type, data=null){
   }
   else if(type==='crossovers'){
     const uid = 'xo_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
-    const tA = data?data.turnout_A:{};
-    const tB = data?data.turnout_B:{};
-    const jmp = data?data.crossing_chainage_jump:{};
+    const tA = (data&&data.turnout_A)||{};
+    const tB = (data&&data.turnout_B)||{};
+    const jmp = (data&&data.crossing_chainage_jump)||{};
 
     // ── Summary row ──
     tr.dataset.xoUid = uid;
@@ -561,14 +716,21 @@ function addRow(type, data=null){
       <td><input data-field="crossover_id" type="text" value="${esc(data?data.crossover_id:nextId('XO'))}" placeholder="XO-001"></td>
       <td><input data-field="name" type="text" value="${esc(data?data.name:'')}" placeholder="Station A Crossover"></td>
       <td><select data-field="tA_track" class="track-sel">${getTrackOptions()}</select></td>
-      <td><input data-field="tA_chainage" type="number" value="${tA.chainage||''}" placeholder="100"></td>
+      <td><input data-field="tA_chainage" type="number" value="${tA.chainage??''}" placeholder="100"></td>
       <td><select data-field="tB_track" class="track-sel">${getTrackOptions()}</select></td>
-      <td><input data-field="tB_chainage" type="number" value="${tB.chainage||''}" placeholder="300"></td>
-      <td><input data-field="speed_limit_kmh" type="number" value="${data?data.speed_limit_kmh:''}" placeholder="50"></td>
+      <td><input data-field="tB_chainage" type="number" value="${tB.chainage??''}" placeholder="300"></td>
+      <td><input data-field="speed_limit_kmh" type="number" value="${(data&&data.speed_limit_kmh)??''}" placeholder="50"></td>
       <td style="white-space:nowrap;display:flex;gap:4px;padding:6px 4px">
         <button class="xo-expand-btn" onclick="toggleXODetail('${uid}')"><i class="ti ti-chevron-down"></i> Details</button>
         <button class="del-btn" onclick="removeXORow('${uid}')">Remove</button>
       </td>`;
+
+    // ── Validation row (messages appear here; hidden while empty) ──
+    const valTr = document.createElement('tr');
+    valTr.dataset.xoUid = uid;
+    valTr.dataset.xoVal = '1';
+    valTr.style.display = 'none';
+    valTr.innerHTML=`<td colspan="8" style="padding:0 6px"><div class="xo-val" id="xo-val-${uid}"></div></td>`;
 
     // ── Detail row ──
     const detailTr = document.createElement('tr');
@@ -577,6 +739,10 @@ function addRow(type, data=null){
     detailTr.className = 'xo-detail-row';
     detailTr.innerHTML=`<td colspan="8">
       <div class="xo-detail-panel" id="xo-detail-${uid}">
+        <div class="xo-detail-tools">
+          <span>Defaults: toe → blade zone ${XO_DEFAULTS.TOE_TO_BLADE} m, blade zone → fouling point ${XO_DEFAULTS.BLADE_TO_FOULING} m, fouling point → jump ${XO_DEFAULTS.FOULING_TO_JUMP} m (Turnout A +, Turnout B −).</span>
+          <button class="btn btn-sm" style="flex-shrink:0" onclick="recalcXO('${uid}')" title="Overwrite all geometry fields and the jump tracks of this crossover with the defaults"><i class="ti ti-refresh"></i> Recalculate</button>
+        </div>
         <div class="xo-detail-grid">
 
           <!-- Turnout A -->
@@ -584,19 +750,19 @@ function addRow(type, data=null){
             <h4><i class="ti ti-arrow-merge-right"></i> Turnout A</h4>
             <div class="xo-field-row">
               <div class="xo-fg"><label>Toe CH (m)</label>
-                <input data-field="tA_toe" type="number" value="${tA.toe_chainage_m||''}" placeholder="100"></div>
+                <input data-field="tA_toe" type="number" value="${tA.toe_chainage_m??''}" placeholder="100"></div>
               <div class="xo-fg"><label>Blade Zone — Main CH (m)</label>
-                <input data-field="tA_bz_main" type="number" value="${tA.blade_zone_main_ch||''}" placeholder="140"></div>
+                <input data-field="tA_bz_main" type="number" value="${tA.blade_zone_main_ch??''}" placeholder="140"></div>
             </div>
             <div class="xo-field-row">
               <div class="xo-fg"><label>Blade Zone — Crossing CH (m)</label>
-                <input data-field="tA_bz_cross" type="number" value="${tA.blade_zone_crossing_ch||''}" placeholder="141"></div>
+                <input data-field="tA_bz_cross" type="number" value="${tA.blade_zone_crossing_ch??''}" placeholder="141"></div>
               <div class="xo-fg"><label>Fouling Pt — Main CH (m)</label>
-                <input data-field="tA_fp_main" type="number" value="${tA.fouling_point_main_ch||''}" placeholder="150"></div>
+                <input data-field="tA_fp_main" type="number" value="${tA.fouling_point_main_ch??''}" placeholder="150"></div>
             </div>
             <div class="xo-field-row full">
               <div class="xo-fg"><label>Fouling Pt — Crossing CH (m)</label>
-                <input data-field="tA_fp_cross" type="number" value="${tA.fouling_point_crossing_ch||''}" placeholder="151"></div>
+                <input data-field="tA_fp_cross" type="number" value="${tA.fouling_point_crossing_ch??''}" placeholder="151"></div>
             </div>
           </div>
 
@@ -605,19 +771,19 @@ function addRow(type, data=null){
             <h4><i class="ti ti-arrow-merge-left"></i> Turnout B</h4>
             <div class="xo-field-row">
               <div class="xo-fg"><label>Toe CH (m)</label>
-                <input data-field="tB_toe" type="number" value="${tB.toe_chainage_m||''}" placeholder="300"></div>
+                <input data-field="tB_toe" type="number" value="${tB.toe_chainage_m??''}" placeholder="300"></div>
               <div class="xo-fg"><label>Blade Zone — Main CH (m)</label>
-                <input data-field="tB_bz_main" type="number" value="${tB.blade_zone_main_ch||''}" placeholder="260"></div>
+                <input data-field="tB_bz_main" type="number" value="${tB.blade_zone_main_ch??''}" placeholder="260"></div>
             </div>
             <div class="xo-field-row">
               <div class="xo-fg"><label>Blade Zone — Crossing CH (m)</label>
-                <input data-field="tB_bz_cross" type="number" value="${tB.blade_zone_crossing_ch||''}" placeholder="261"></div>
+                <input data-field="tB_bz_cross" type="number" value="${tB.blade_zone_crossing_ch??''}" placeholder="261"></div>
               <div class="xo-fg"><label>Fouling Pt — Main CH (m)</label>
-                <input data-field="tB_fp_main" type="number" value="${tB.fouling_point_main_ch||''}" placeholder="250"></div>
+                <input data-field="tB_fp_main" type="number" value="${tB.fouling_point_main_ch??''}" placeholder="250"></div>
             </div>
             <div class="xo-field-row full">
               <div class="xo-fg"><label>Fouling Pt — Crossing CH (m)</label>
-                <input data-field="tB_fp_cross" type="number" value="${tB.fouling_point_crossing_ch||''}" placeholder="251"></div>
+                <input data-field="tB_fp_cross" type="number" value="${tB.fouling_point_crossing_ch??''}" placeholder="251"></div>
             </div>
           </div>
         </div>
@@ -627,48 +793,48 @@ function addRow(type, data=null){
           <h4><i class="ti ti-arrows-exchange"></i> Crossing Chainage Jump</h4>
           <div class="info-box ia" style="margin-bottom:8px;padding:7px 10px">
             <i class="ti ti-info-circle"></i>
-            <div>The surveying discontinuity between Turnout A and Turnout B. Defines where the chainage system transitions from one mainline track to the other on the connecting track.</div>
+            <div>The surveying discontinuity between Turnout A and Turnout B. Defines where the chainage system transitions from one mainline track to the other on the connecting track. From Track is always Turnout A's track and To Track is Turnout B's track (set automatically).</div>
           </div>
           <div class="xo-jump-grid">
-            <div class="xo-fg"><label>From Track</label>
-              <select data-field="jmp_from_track" class="track-sel">${getTrackOptions()}</select></div>
+            <div class="xo-fg"><label>From Track (= Turnout A track)</label>
+              <select data-field="jmp_from_track" class="track-sel" disabled>${getTrackOptions()}</select></div>
             <div class="xo-fg"><label>From CH (m)</label>
-              <input data-field="jmp_from_ch" type="number" value="${jmp.from_ch||''}" placeholder="200"></div>
-            <div class="xo-fg"><label>To Track</label>
-              <select data-field="jmp_to_track" class="track-sel">${getTrackOptions()}</select></div>
+              <input data-field="jmp_from_ch" type="number" value="${jmp.from_ch??''}" placeholder="200"></div>
+            <div class="xo-fg"><label>To Track (= Turnout B track)</label>
+              <select data-field="jmp_to_track" class="track-sel" disabled>${getTrackOptions()}</select></div>
             <div class="xo-fg"><label>To CH (m)</label>
-              <input data-field="jmp_to_ch" type="number" value="${jmp.to_ch||''}" placeholder="180"></div>
+              <input data-field="jmp_to_ch" type="number" value="${jmp.to_ch??''}" placeholder="180"></div>
           </div>
         </div>
       </div>
     </td>`;
 
     tbody.appendChild(tr);
+    tbody.appendChild(valTr);
     tbody.appendChild(detailTr);
 
     // Set track selects after DOM insertion (needs setTimeout for select population)
     setTimeout(()=>{
-      const summaryRow = tbody.querySelector(`tr[data-xo-uid="${uid}"][data-xo-summary]`);
-      const detailRow  = tbody.querySelector(`tr[data-xo-uid="${uid}"][data-xo-detail]`);
-      if(summaryRow){
-        const selA = summaryRow.querySelector('[data-field="tA_track"]');
-        const selB = summaryRow.querySelector('[data-field="tB_track"]');
-        if(selA && tA.track_id) selA.value = tA.track_id;
-        if(selB && tB.track_id) selB.value = tB.track_id;
-      }
-      if(detailRow){
-        const selFrom = detailRow.querySelector('[data-field="jmp_from_track"]');
-        const selTo   = detailRow.querySelector('[data-field="jmp_to_track"]');
-        if(selFrom && jmp.from_track_id) selFrom.value = jmp.from_track_id;
-        if(selTo   && jmp.to_track_id)   selTo.value   = jmp.to_track_id;
-      }
+      const rows = xoRows(uid);
+      if(!rows.sr || !rows.dr) return;
+      const selA = rows.sr.querySelector('[data-field="tA_track"]');
+      const selB = rows.sr.querySelector('[data-field="tB_track"]');
+      if(selA && tA.track_id) selA.value = tA.track_id;
+      if(selB && tB.track_id) selB.value = tB.track_id;
+      // A new crossover starts with B on the second track (if there is one)
+      if(!data && selB && STATE.tracks[1]) selB.value = STATE.tracks[1].track_id;
+      // Jump tracks: kept as in a loaded file; otherwise derived from A / B
+      const selFrom = rows.dr.querySelector('[data-field="jmp_from_track"]');
+      const selTo   = rows.dr.querySelector('[data-field="jmp_to_track"]');
+      if(selFrom){ if(jmp.from_track_id) selFrom.value = jmp.from_track_id; else if(selA) selFrom.value = selA.value; }
+      if(selTo){   if(jmp.to_track_id)   selTo.value   = jmp.to_track_id;   else if(selB) selTo.value   = selB.value; }
+      scheduleValidate();
     },0);
     return; // early return — rows already appended above
   }
   else if(type==='signals'){
-    const dirs=STATE.tracks.map(t=>`<option value="${esc(t.track_id)}">${esc(t.track_id)} (${esc(t.direction)})</option>`).join('');
     tr.innerHTML=`
-      <td><input type="text" value="${esc(data?data.signal_id:nextId('SIG'))}" placeholder="SIG-NB-001"></td>
+      <td><input type="text" value="${esc(data?data.signal_id:nextSignalId())}" placeholder="S001"></td>
       <td><select class="track-sel">${getTrackOptions()}</select></td>
       <td><input type="number" value="${data?data.chainage:''}" placeholder="280"></td>
       <td><input type="text" value="${esc(data?data.direction:'NB')}" placeholder="NB or SB"></td>
@@ -685,6 +851,48 @@ function addRow(type, data=null){
 }
 
 // ── Read tables back into arrays ──────────────────────────────────────────
+// Crossover rows: one object per summary row, INCLUDING rows with an empty
+// crossover_id (the validator needs to flag those). readTable('crossovers')
+// filters them out, exactly as before.
+function readXORows(){
+  const summaryRows=[...document.querySelectorAll('#tbody-crossovers tr[data-xo-summary]')];
+  return summaryRows.map(sr=>{
+    const uid = sr.dataset.xoUid;
+    const dr  = document.querySelector(`#tbody-crossovers tr[data-xo-uid="${uid}"][data-xo-detail]`);
+    const f=(row,field)=>{ const el=row?row.querySelector(`[data-field="${field}"]`):null; return el?T(el.value):null; };
+    const n=(row,field)=>{ const el=row?row.querySelector(`[data-field="${field}"]`):null; return el&&el.value!==''?+el.value:null; };
+    return { uid, data: {
+      crossover_id: f(sr,'crossover_id'),
+      name:         f(sr,'name'),
+      turnout_A: {
+        track_id:               f(sr,'tA_track'),
+        chainage:               n(sr,'tA_chainage'),
+        toe_chainage_m:         n(dr,'tA_toe'),
+        blade_zone_main_ch:     n(dr,'tA_bz_main'),
+        blade_zone_crossing_ch: n(dr,'tA_bz_cross'),
+        fouling_point_main_ch:  n(dr,'tA_fp_main'),
+        fouling_point_crossing_ch: n(dr,'tA_fp_cross')
+      },
+      turnout_B: {
+        track_id:               f(sr,'tB_track'),
+        chainage:               n(sr,'tB_chainage'),
+        toe_chainage_m:         n(dr,'tB_toe'),
+        blade_zone_main_ch:     n(dr,'tB_bz_main'),
+        blade_zone_crossing_ch: n(dr,'tB_bz_cross'),
+        fouling_point_main_ch:  n(dr,'tB_fp_main'),
+        fouling_point_crossing_ch: n(dr,'tB_fp_cross')
+      },
+      crossing_chainage_jump: {
+        from_track_id: f(dr,'jmp_from_track'),
+        from_ch:       n(dr,'jmp_from_ch'),
+        to_track_id:   f(dr,'jmp_to_track'),
+        to_ch:         n(dr,'jmp_to_ch')
+      },
+      speed_limit_kmh: n(sr,'speed_limit_kmh')
+    }};
+  });
+}
+
 function readTable(type){
   const rows=[...document.querySelectorAll(`#tbody-${type} tr`)];
   if(type==='platforms') return rows.map(r=>{
@@ -703,43 +911,7 @@ function readTable(type){
             speed_limit_kmh:+i[3].value,notes:T(i[4].value)};
   }).filter(r=>r.track_id);
   if(type==='crossovers'){
-    // Collect only summary rows — each summary row has a paired detail row
-    const summaryRows=[...document.querySelectorAll('#tbody-crossovers tr[data-xo-summary]')];
-    return summaryRows.map(sr=>{
-      const uid = sr.dataset.xoUid;
-      const dr  = document.querySelector(`#tbody-crossovers tr[data-xo-uid="${uid}"][data-xo-detail]`);
-      const f=(row,field)=>{ const el=row?row.querySelector(`[data-field="${field}"]`):null; return el?T(el.value):null; };
-      const n=(row,field)=>{ const el=row?row.querySelector(`[data-field="${field}"]`):null; return el&&el.value!==''?+el.value:null; };
-      return {
-        crossover_id: f(sr,'crossover_id'),
-        name:         f(sr,'name'),
-        turnout_A: {
-          track_id:               f(sr,'tA_track'),
-          chainage:               n(sr,'tA_chainage'),
-          toe_chainage_m:         n(dr,'tA_toe'),
-          blade_zone_main_ch:     n(dr,'tA_bz_main'),
-          blade_zone_crossing_ch: n(dr,'tA_bz_cross'),
-          fouling_point_main_ch:  n(dr,'tA_fp_main'),
-          fouling_point_crossing_ch: n(dr,'tA_fp_cross')
-        },
-        turnout_B: {
-          track_id:               f(sr,'tB_track'),
-          chainage:               n(sr,'tB_chainage'),
-          toe_chainage_m:         n(dr,'tB_toe'),
-          blade_zone_main_ch:     n(dr,'tB_bz_main'),
-          blade_zone_crossing_ch: n(dr,'tB_bz_cross'),
-          fouling_point_main_ch:  n(dr,'tB_fp_main'),
-          fouling_point_crossing_ch: n(dr,'tB_fp_cross')
-        },
-        crossing_chainage_jump: {
-          from_track_id: f(dr,'jmp_from_track'),
-          from_ch:       n(dr,'jmp_from_ch'),
-          to_track_id:   f(dr,'jmp_to_track'),
-          to_ch:         n(dr,'jmp_to_ch')
-        },
-        speed_limit_kmh: n(sr,'speed_limit_kmh')
-      };
-    }).filter(r=>r.crossover_id);
+    return readXORows().map(o=>o.data).filter(r=>r.crossover_id);
   }
   if(type==='signals') return rows.map(r=>{
     const i=r.querySelectorAll('input,select');
@@ -766,6 +938,190 @@ function removeXORow(uid){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// CROSSOVER AUTO-FILL (CH-003)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function xoRows(uid){
+  return {
+    sr: document.querySelector(`#tbody-crossovers tr[data-xo-uid="${uid}"][data-xo-summary]`),
+    dr: document.querySelector(`#tbody-crossovers tr[data-xo-uid="${uid}"][data-xo-detail]`)
+  };
+}
+
+function xoRound(v){ return Math.round(v*1000)/1000; }
+
+// Jump tracks always follow the Turnout A / B tracks.
+function xoSyncJumpTracks(uid){
+  const {sr,dr}=xoRows(uid);
+  if(!sr||!dr) return;
+  const a=sr.querySelector('[data-field="tA_track"]'), b=sr.querySelector('[data-field="tB_track"]');
+  const f=dr.querySelector('[data-field="jmp_from_track"]'), t=dr.querySelector('[data-field="jmp_to_track"]');
+  if(a&&f) f.value=a.value;
+  if(b&&t) t.value=b.value;
+}
+
+// Fill the geometry fields of one or both turnouts from the summary-row
+// chainage. overwrite=false: only empty fields; overwrite=true: everything.
+// Returns false when a turnout chainage is empty (nothing to compute from).
+function xoAutoFill(uid, overwrite, only){
+  const {sr,dr}=xoRows(uid);
+  if(!sr||!dr) return false;
+  let ok=true;
+  (only?[only]:['tA','tB']).forEach(side=>{
+    const chEl=sr.querySelector(`[data-field="${side}_chainage"]`);
+    if(!chEl||chEl.value===''){ ok=false; return; }
+    const ch=+chEl.value, sign=side==='tA'?1:-1;
+    const toe=ch;
+    const bz =xoRound(toe+sign*XO_DEFAULTS.TOE_TO_BLADE);
+    const fp =xoRound(bz +sign*XO_DEFAULTS.BLADE_TO_FOULING);
+    const jp =xoRound(fp +sign*XO_DEFAULTS.FOULING_TO_JUMP);
+    const set=(field,val)=>{
+      const el=dr.querySelector(`[data-field="${field}"]`);
+      if(el && (overwrite || el.value==='')) el.value=val;
+    };
+    set(`${side}_toe`,toe);
+    set(`${side}_bz_main`,bz);   set(`${side}_bz_cross`,bz);
+    set(`${side}_fp_main`,fp);   set(`${side}_fp_cross`,fp);
+    // The two jump ends are joined into the crossing chainage jump
+    set(side==='tA'?'jmp_from_ch':'jmp_to_ch', jp);
+  });
+  if(overwrite) xoSyncJumpTracks(uid);
+  return ok;
+}
+
+function recalcXO(uid){
+  const ok=xoAutoFill(uid,true);
+  toast(ok?'Crossover recalculated from the default distances':'Enter both turnout chainages first (a side without a chainage was skipped)');
+  scheduleValidate();
+}
+
+// Delegated events on the crossover table
+(function(){
+  const tb=document.getElementById('tbody-crossovers');
+  tb.addEventListener('change',e=>{
+    const el=e.target, f=el.dataset&&el.dataset.field;
+    if(!f) return;
+    const row=el.closest('tr'), uid=row&&row.dataset.xoUid;
+    if(uid){
+      if(f==='tA_chainage') xoAutoFill(uid,false,'tA');
+      else if(f==='tB_chainage') xoAutoFill(uid,false,'tB');
+      else if(f==='tA_track'||f==='tB_track') xoSyncJumpTracks(uid);
+    }
+    scheduleValidate();
+  });
+  tb.addEventListener('input',()=>scheduleValidate());
+  document.getElementById('tbody-signals').addEventListener('input',()=>scheduleValidate());
+  // Rows added / removed (Add, Remove, load layout)
+  new MutationObserver(()=>scheduleValidate()).observe(tb,{childList:true});
+  new MutationObserver(()=>scheduleValidate()).observe(document.getElementById('tbody-signals'),{childList:true});
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CROSSOVER VALIDATION (CH-003) — messages only, never blocks Save
+// Errors: ID / track / jump / range / order checks. Warning: signal inside a
+// turnout zone. Chainages of different tracks are never compared with each
+// other (each track has its own chainage system).
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _valTimer=null;
+function scheduleValidate(){
+  clearTimeout(_valTimer);
+  _valTimer=setTimeout(validateCrossovers,40);
+}
+
+function validateCrossovers(){
+  clearTimeout(_valTimer);
+  const rows=readXORows();
+  const tracks=STATE.tracks;
+  const signals=readTable('signals');
+  const idCount={};
+  rows.forEach(o=>{ const id=o.data.crossover_id; if(id) idCount[id]=(idCount[id]||0)+1; });
+  let errors=0, warnings=0;
+
+  rows.forEach(o=>{
+    const d=o.data, A=d.turnout_A, B=d.turnout_B, J=d.crossing_chainage_jump;
+    const issues=[];
+    const err =t=>issues.push({lvl:'err',t});
+    const warn=t=>issues.push({lvl:'warn',t});
+    const trackOf=id=>tracks.find(t=>t.track_id===id);
+    const fmtSeq=seq=>seq.map(p=>`${p[0]} ${p[1]}`).join(' → ');
+
+    // 4. Crossover ID
+    if(!d.crossover_id) err('Crossover ID is empty (this crossover will not be saved).');
+    else{
+      if(idCount[d.crossover_id]>1) err(`Crossover ID "${d.crossover_id}" is used by more than one crossover.`);
+      if(tracks.some(t=>t.track_id===d.crossover_id)) err(`Crossover ID "${d.crossover_id}" is the same as a track ID (M3 uses the crossover ID as a track ID).`);
+    }
+
+    // 1. Turnout tracks
+    const trA=trackOf(A.track_id), trB=trackOf(B.track_id);
+    if(!trA) err(`Turnout A track "${A.track_id||''}" is not defined in Step 1.`);
+    if(!trB) err(`Turnout B track "${B.track_id||''}" is not defined in Step 1.`);
+    if(A.track_id && A.track_id===B.track_id) err('Turnout A and Turnout B must be on different tracks.');
+
+    // 2. Jump chainages filled in
+    const miss=[]; if(J.from_ch==null) miss.push('From CH'); if(J.to_ch==null) miss.push('To CH');
+    if(miss.length) err(`Chainage jump ${miss.join(' and ')} ${miss.length>1?'are':'is'} empty (M3 skips a crossover without a complete jump).`);
+
+    // 3. Jump tracks = (A track → B track)
+    if(J.from_track_id!==A.track_id || J.to_track_id!==B.track_id)
+      err(`Chainage jump tracks must be Turnout A track → Turnout B track (${A.track_id||'?'} → ${B.track_id||'?'}), but are ${J.from_track_id||'?'} → ${J.to_track_id||'?'}. Use Recalculate to reset them.`);
+
+    // 5. Chainages inside track range
+    function rangeCheck(name, tn, tr, jumpVal, jumpName){
+      if(!tr) return;
+      const list=[['turnout CH',tn.chainage],['toe',tn.toe_chainage_m],['blade zone main',tn.blade_zone_main_ch],['blade zone crossing',tn.blade_zone_crossing_ch],
+                  ['fouling pt main',tn.fouling_point_main_ch],['fouling pt crossing',tn.fouling_point_crossing_ch],[jumpName,jumpVal]];
+      const bad=list.filter(p=>p[1]!=null && (p[1]<tr.chainage_start || p[1]>tr.chainage_end));
+      if(bad.length) err(`Turnout ${name}: ${bad.map(p=>`${p[0]} ${p[1]}`).join(', ')} outside the range of track ${tr.track_id} (${tr.chainage_start}–${tr.chainage_end}).`);
+    }
+    rangeCheck('A',A,trA,J.from_ch,'jump From CH');
+    rangeCheck('B',B,trB,J.to_ch,'jump To CH');
+
+    // 6. Order along each side (non-strict; all increasing or all decreasing)
+    function orderCheck(name, tn, jumpVal, jumpName){
+      const cross=[['toe',tn.toe_chainage_m],['blade zone crossing',tn.blade_zone_crossing_ch],['fouling pt crossing',tn.fouling_point_crossing_ch],[jumpName,jumpVal]].filter(p=>p[1]!=null);
+      const main =[['toe',tn.toe_chainage_m],['blade zone main',tn.blade_zone_main_ch],['fouling pt main',tn.fouling_point_main_ch]].filter(p=>p[1]!=null);
+      const dirOf=seq=>{
+        let inc=false, dec=false;
+        for(let i=1;i<seq.length;i++){ const df=seq[i][1]-seq[i-1][1]; if(df>0) inc=true; if(df<0) dec=true; }
+        return inc&&dec?'bad':inc?1:dec?-1:0;
+      };
+      const dc=dirOf(cross), dm=dirOf(main);
+      if(dc==='bad') err(`Turnout ${name} crossing side is out of order (${fmtSeq(cross)}); values must run in one direction.`);
+      if(dm==='bad') err(`Turnout ${name} main side is out of order (${fmtSeq(main)}); values must run in one direction.`);
+      if(dc!=='bad' && dm!=='bad' && dc!==0 && dm!==0 && dc!==dm)
+        err(`Turnout ${name} main side (${fmtSeq(main)}) runs the opposite way to its crossing side (${fmtSeq(cross)}).`);
+    }
+    orderCheck('A',A,J.from_ch,'jump From CH');
+    orderCheck('B',B,J.to_ch,'jump To CH');
+
+    // 7. Warning: signal strictly inside a turnout zone
+    function signalCheck(name, tn){
+      const vals=[tn.chainage,tn.toe_chainage_m,tn.blade_zone_main_ch,tn.blade_zone_crossing_ch,tn.fouling_point_main_ch,tn.fouling_point_crossing_ch].filter(v=>v!=null);
+      if(vals.length<2||!tn.track_id) return;
+      const lo=Math.min(...vals), hi=Math.max(...vals);
+      signals.forEach(s=>{
+        if(s.track_id===tn.track_id && s.chainage>lo && s.chainage<hi)
+          warn(`Signal ${s.signal_id} (ch ${s.chainage}) lies inside the Turnout ${name} zone (ch ${lo}–${hi}).`);
+      });
+    }
+    signalCheck('A',A);
+    signalCheck('B',B);
+
+    // Render
+    issues.forEach(i=>{ if(i.lvl==='err') errors++; else warnings++; });
+    const box=document.getElementById('xo-val-'+o.uid);
+    if(box){
+      box.innerHTML=issues.map(i=>`<div class="xo-msg ${i.lvl}"><strong>${i.lvl==='err'?'Error':'Warning'}:</strong> ${esc(i.t)}</div>`).join('');
+      const vr=box.closest('tr'); if(vr) vr.style.display=issues.length?'':'none';
+    }
+  });
+  return { errors, warnings };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STEP 4 — SCHEMATIC
 // ═══════════════════════════════════════════════════════════════════════════
 
 let schematicHitAreas=[];
@@ -813,6 +1169,9 @@ function drawSchematic(){
   }
 
   schematicHitAreas=[];
+  // Text rectangles already drawn (platform + signal labels), used to stack
+  // signal labels so they do not overlap (CH-001)
+  const labelRects=[];
 
   // ── Draw each track ──────────────────────────────────────────────────
   trackMeta.forEach(({tr,y,chStart,chEnd})=>{
@@ -869,6 +1228,8 @@ function drawSchematic(){
     if(x1-x0>30){
       const labelY = isTop ? pyTop+PLT_H+10 : pyTop-4;
       ctx.fillText(label,(x0+x1)/2,labelY);
+      const lw=ctx.measureText(label).width;
+      labelRects.push({x:(x0+x1)/2-lw/2-1,y:labelY-9,w:lw+2,h:11});
     }
     schematicHitAreas.push({x:x0,y:pyTop-2,w:x1-x0,h:PLT_H+4,tip:`Platform: ${label} · Track ${p.track_id} · CH ${p.from_ch}–${p.to_ch} m`});
   });
@@ -877,6 +1238,22 @@ function drawSchematic(){
   // Convention: NB (left→right travel) → post rises above track, arm points right  |-O
   //             SB (right→left travel) → post drops below track, arm points left   O-|
   // Post: 10px, arm: 10px, head: solid red dot r=4
+  // CH-001: the signal ID is written above the head (NB-style) or below the
+  // head (SB-style); on overlap the label moves one 11px layer further out.
+  function drawSignalLabel(text, cx, baseY, outSign){
+    ctx.font='10px system-ui'; ctx.textAlign='center';
+    const w=ctx.measureText(text).width;
+    let by=baseY;
+    for(let k=0;k<8;k++){
+      const r={x:cx-w/2-1,y:by-9,w:w+2,h:11};
+      const hit=labelRects.some(o=>r.x<o.x+o.w && r.x+r.w>o.x && r.y<o.y+o.h && r.y+r.h>o.y);
+      if(!hit) break;
+      by+=outSign*11;
+    }
+    labelRects.push({x:cx-w/2-1,y:by-9,w:w+2,h:11});
+    ctx.fillStyle='#A32D2D';
+    ctx.fillText(text,cx,by);
+  }
   signals.forEach(s=>{
     const meta=trackMeta.find(m=>m.tr.track_id===s.track_id);
     if(!meta) return;
@@ -897,6 +1274,8 @@ function drawSchematic(){
       // Head
       ctx.fillStyle='#A32D2D';
       ctx.beginPath(); ctx.arc(x+ARM, postTop, HEAD_R, 0, Math.PI*2); ctx.fill();
+      // Name above the head
+      drawSignalLabel(s.signal_id, x+ARM/2, postTop-HEAD_R-3, -1);
       schematicHitAreas.push({x:x-5,y:postTop-HEAD_R-2,w:ARM+HEAD_R+5,h:POST+HEAD_R+4,
         tip:`Signal: ${s.signal_id} · ${s.track_id} ch ${s.chainage} m · Dir ${s.direction} · ${s.type}`});
     } else {
@@ -908,6 +1287,8 @@ function drawSchematic(){
       // Head
       ctx.fillStyle='#A32D2D';
       ctx.beginPath(); ctx.arc(x-ARM, postBot, HEAD_R, 0, Math.PI*2); ctx.fill();
+      // Name below the head
+      drawSignalLabel(s.signal_id, x-ARM/2, postBot+HEAD_R+11, 1);
       schematicHitAreas.push({x:x-ARM-HEAD_R-2,y:y+HALF_TRACK-2,w:ARM+HEAD_R+7,h:POST+HEAD_R+4,
         tip:`Signal: ${s.signal_id} · ${s.track_id} ch ${s.chainage} m · Dir ${s.direction} · ${s.type}`});
     }
@@ -975,7 +1356,9 @@ function saveLayout(){
   a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
   a.download='track_layout.json';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  toast('Saved track_layout.json');
+  // CH-003: Save is never blocked; the toast only reports open crossover errors
+  const nErr=validateCrossovers().errors;
+  toast('Saved track_layout.json'+(nErr?` (${nErr} crossover error${nErr>1?'s':''} still open)`:''));
 }
 
 function handleLoadDrop(e){
@@ -1099,75 +1482,28 @@ window.addEventListener('resize',()=>{ clearTimeout(window._rsz); window._rsz=se
   // schematic canvas, which has its own horizontal scroll when it needs more.
   //
   // ── body min-height override (10/09/2026, round 3) ─────────────────────
-  // This module's own <style> block has body{min-height:100vh} (a normal
-  // full-viewport reset for standalone use, unrelated to the shell). Inside
-  // an iframe, 100vh is sized against the IFRAME's own currently-assigned
-  // height, not the outer browser window. That made body's minimum height
-  // track whatever height the shell last set on this iframe, which coupled
-  // "what we measure" to "what we were last assigned" — the actual root
-  // cause behind two rounds of whack-a-mole today: a flat +6px height-report
-  // buffer (round 1) fed that coupling into an infinite-growth loop
-  // (reverted, round 2); removing the buffer then let a genuine small
-  // under-measurement resurface as a double scrollbar (see PROJECT_STATE.md,
-  // round-3 entry, 10/09/2026, for the full story). Overriding min-height to
-  // auto here — same injection technique as the width override above,
-  // appended after this module's own <style> block so it wins on source
-  // order — removes the 100vh coupling entirely. Real content-driven height
-  // changes during editing (adding a track, expanding a panel, etc.) are
-  // completely unaffected: ResizeObserver still measures the actual DOM via
-  // scrollHeight regardless of this rule; only the artificial "floor tied to
-  // the iframe's own last-assigned height" is gone. With the coupling
-  // removed, reportHeight() no longer needs — and should not regain — any
-  // additive buffer; plain scrollHeight is now safe AND accurate.
+  // body{min-height:100vh} in this module's own CSS made the body's minimum
+  // height track the iframe's own last-assigned height (100vh inside an
+  // iframe = the iframe's height), coupling "what we measure" to "what we
+  // were last assigned" — the root cause of the earlier double-scrollbar /
+  // infinite-growth rounds (full story: PROJECT_STATE.md, round-3 entry,
+  // 10/09/2026). Overriding min-height to auto here, appended after the
+  // module's own <style> so it wins on source order, removes the coupling.
+  // With it removed, reportHeight() must NOT regain any additive buffer;
+  // plain scrollHeight is safe and accurate.
   const styleOverride = document.createElement('style');
   styleOverride.textContent = '.app{max-width:1000px} body{min-height:auto}';
   document.head.appendChild(styleOverride);
 
   // ── Auto-height reporting (09/09/2026, updated 10/09/2026) ─────────────
   // Reports this document's actual height to the shell so the iframe can be
-  // sized to fit exactly — avoids a scrollbar inside the iframe stacked on
-  // top of the shell page's own scrollbar. Re-measures on any layout change
-  // (adding/removing tracks or rows, expanding a crossover's detail panel,
-  // toggling chainage jumps, etc.), not just once on load, and whenever the
-  // shell asks after making this the visible step (REQUEST_RESIZE, double
-  // rAF above).
-  //
-  // Added 10/09/2026: the double-rAF REQUEST_RESIZE fix did not fully
-  // resolve a residual real-world double-scrollbar report from the user.
-  // Root-cause work this session (see claude/PROJECT_STATE.md, 10/09/2026
-  // entry) built a Playwright harness reproducing this exact bridge/shell
-  // cycle and could not reproduce a measurement gap under any tested
-  // condition (various widths, realistic populated content, repeated
-  // hide/show cycles, content growing while hidden) — the mechanism above
-  // is never wrong in isolation. The one thing the sandbox used for that
-  // testing structurally cannot exercise is the tabler-icons webfont
-  // (loaded via CDN in every module's <head>) actually finishing an async
-  // load — confirmed blocked there by network egress. An icon webfont
-  // swapping in after the REQUEST_RESIZE measurement already ran, while
-  // this module's iframe was still display:none (so the resulting reflow
-  // was invisible to ResizeObserver), is the most plausible remaining
-  // explanation, and matches a classic icon-font FOUT/FOIT pattern. Fix:
-  // also re-report once document.fonts.ready resolves — safe regardless of
-  // timing relative to the rest of this bridge (the promise resolves
-  // immediately if fonts are already loaded, so this never delays or
-  // double-triggers anything on a normal load).
-  //
-  // CORRECTED same day (10/09/2026): the first version of this fix also
-  // added a flat +6px buffer to every reported height. That buffer created
-  // a genuine infinite-growth regression: body{min-height:100vh} in this
-  // module's own CSS makes 100vh (and so the body's minimum height) track
-  // the iframe's OWN currently-assigned height. Each reportHeight() call
-  // was feeding height+6 back to the shell, which set the iframe height
-  // accordingly, which raised 100vh inside the iframe by the same +6,
-  // which ResizeObserver saw as new growth and re-reported +6 again —
-  // an unbounded loop, one visible symptom being the outer page growing
-  // taller indefinitely. Removed the buffer entirely; reporting plain
-  // scrollHeight lets the loop settle at its natural fixed point (the
-  // point where scrollHeight already equals the iframe's current height,
-  // so ResizeObserver has nothing new to report) exactly as it did before
-  // today's changes. The document.fonts.ready re-report above is unaffected
-  // and kept, since it fires once per font-load event rather than being
-  // part of this feedback path.
+  // sized to fit exactly. Re-measures on any layout change (adding/removing
+  // rows, expanding a crossover's detail panel or the Example, toggling
+  // chainage jumps, etc.), when the shell asks after making this the
+  // visible step (REQUEST_RESIZE, double rAF above), and once
+  // document.fonts.ready resolves (icon webfont swapping in while the
+  // iframe was display:none). Never add a flat buffer to the reported
+  // height: it creates an infinite-growth loop (see the round-3 note above).
   function reportHeight(){
     window.parent.postMessage({ type:'MODULE_RESIZE', module:'M1', height: document.documentElement.scrollHeight }, '*');
   }
