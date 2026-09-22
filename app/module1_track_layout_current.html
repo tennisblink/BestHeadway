@@ -71,12 +71,25 @@ body{font-family:system-ui,sans-serif;font-size:14px;background:var(--color-back
 .jump-toggle:hover{text-decoration:underline}
 .jump-table-wrap{margin-top:8px;display:none}
 
-/* ── Schematic canvas ── */
-.schematic-wrap{width:100%;overflow-x:auto;border:0.5px solid rgba(0,0,0,.12);border-radius:10px;background:#fff;position:relative}
+/* ── Schematic ── */
+.schematic-flex{display:flex;border:0.5px solid rgba(0,0,0,.12);border-radius:10px;background:#fff;overflow:hidden}
+.schematic-labels{flex:0 0 92px;position:relative;border-right:0.5px solid rgba(0,0,0,.12);background:#fafaf8}
+.schematic-label-item{position:absolute;left:0;right:0;display:flex;align-items:center;gap:6px;padding:0 8px;font-size:11px;font-weight:600;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.schematic-label-dot{width:10px;height:4px;border-radius:2px;flex-shrink:0}
+.schematic-scroll{flex:1;overflow-x:auto;position:relative}
 canvas#schematic{display:block;cursor:crosshair}
 .schematic-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:#666}
 .legend-item{display:flex;align-items:center;gap:5px}
 .legend-dot{width:12px;height:4px;border-radius:2px}
+
+/* ── Track order control ── */
+.track-order-ctrl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:11px;color:#666;margin-bottom:10px}
+.track-order-ctrl .toc-label{font-weight:500;color:#666;margin-right:2px}
+.toc-chip{display:inline-flex;align-items:center;gap:5px;background:var(--color-background-secondary,#f5f5f3);border:0.5px solid rgba(0,0,0,.15);border-radius:16px;padding:3px 4px 3px 10px;font-size:11px}
+.toc-chip .toc-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.toc-chip button{width:18px;height:18px;border:none;background:#fff;border-radius:50%;cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;color:#444}
+.toc-chip button:hover{background:#e2e2df}
+.toc-chip button:disabled{opacity:.3;cursor:default}
 
 /* ── Placeholder ── */
 .placeholder-panel{border:1px dashed rgba(0,0,0,.2);border-radius:10px;padding:20px;text-align:center;color:#aaa;font-size:12px}
@@ -398,10 +411,14 @@ svg.xoex .row{stroke:#ddd;stroke-width:1}
   </div>
   <div class="info-box ib">
     <i class="ti ti-info-circle"></i>
-    <div>Read-only diagram drawn to chainage scale. Hover over elements to see details. Both tracks shown left-to-right by chainage.</div>
+    <div>Read-only diagram drawn to a fixed scale (6000 m across the visible width). Layouts longer than that scroll horizontally. Hover over elements to see details. Tracks shown left-to-right by chainage, using one shared scale across all tracks.</div>
   </div>
-  <div class="schematic-wrap">
-    <canvas id="schematic" height="220"></canvas>
+  <div id="track-order-ctrl" class="track-order-ctrl"></div>
+  <div class="schematic-flex">
+    <div class="schematic-labels" id="schematic-labels"></div>
+    <div class="schematic-scroll" id="schematic-scroll">
+      <canvas id="schematic" height="220"></canvas>
+    </div>
   </div>
   <div id="hover-tip" style="font-size:11px;color:#666;margin-top:6px;min-height:16px"></div>
   <div class="schematic-legend">
@@ -447,12 +464,30 @@ svg.xoex .row{stroke:#ddd;stroke-width:1}
 //   STATE.civil_speed_restrictions — flat array
 //   STATE.crossovers          — flat array
 //   STATE.signals             — flat array
+//   STATE.schematicOrder      — array of track _uid, display-only vertical
+//                                order for the Step 4 schematic. NOT part of
+//                                the exported track_layout.json — Step 1
+//                                editing order and the saved tracks array
+//                                order are untouched by this.
 //
 // Output: track_layout.json
 //
 // 21/09/2026: CH-001 signal name labels on the schematic; CH-002 default
 // signal ID Sxxx; CH-003 crossover validation, auto-fill, Recalculate,
 // Save-toast error count and the expandable Example diagram.
+// 22/09/2026: CH-018 schematic rendering fixes — (1) all tracks now share
+// one global chainage-to-pixel scale instead of each track independently
+// stretching its own chainage range to the full canvas width (this is what
+// made Track 3, e.g. ch 3000-4000, draw as long as NB/SB's full 0-5000);
+// (2) the scale is fixed at MAX_VISIBLE_CHAINAGE=6000m across the visible
+// width — a layout longer than that scrolls horizontally instead of
+// squeezing everything together; (3) track name labels moved off the
+// canvas into a sticky, non-scrolling sidebar so they stay visible while
+// scrolling; (4) a display-only track vertical order control (up/down
+// chips) lets the user reorder tracks in the schematic without touching
+// Step 1 or the saved JSON — this also lets a crossover that connects two
+// non-adjacent tracks (e.g. XO-001: NB↔T3, skipping SB) be moved so it no
+// longer visually cuts through an unrelated track's line.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const STATE = {
@@ -463,7 +498,8 @@ const STATE = {
   civil_speed_restrictions: [],
   crossovers: [],
   diamonds: [],
-  signals: []
+  signals: [],
+  schematicOrder: []
 };
 
 // ── Crossover auto-fill defaults (metres) — CH-003 ────────────────────────
@@ -472,6 +508,13 @@ const STATE = {
 //   blade zone ± BLADE_TO_FOULING; jump end = fouling point ± FOULING_TO_JUMP.
 // Turnout A adds (+), Turnout B subtracts (−).
 const XO_DEFAULTS = { TOE_TO_BLADE: 30, BLADE_TO_FOULING: 10, FOULING_TO_JUMP: 10 };
+
+// ── Schematic scale (metres) — CH-018 ──────────────────────────────────────
+// The visible width of the schematic viewport always represents this many
+// metres of chainage. A network whose total chainage span exceeds this
+// value draws wider than the viewport and the wrapper scrolls horizontally
+// (.schematic-scroll{overflow-x:auto}) rather than compressing the scale.
+const MAX_VISIBLE_CHAINAGE = 6000;
 
 // ── ID counters ───────────────────────────────────────────────────────────
 const COUNTERS = { platforms:0, gradients:0, speeds:0, crossovers:0, signals:0, jumps:{} };
@@ -539,6 +582,7 @@ function addTrack(data=null){
     _expanded: true
   };
   STATE.tracks.push(track);
+  STATE.schematicOrder.push(track._uid);
   renderTracks();
   refreshAllTrackDropdowns();
   scheduleValidate();
@@ -546,9 +590,11 @@ function addTrack(data=null){
 
 function removeTrack(uid){
   STATE.tracks=STATE.tracks.filter(t=>t._uid!==uid);
+  STATE.schematicOrder=STATE.schematicOrder.filter(u=>u!==uid);
   renderTracks();
   refreshAllTrackDropdowns();
   scheduleValidate();
+  drawSchematic();
 }
 
 function renderTracks(){
@@ -628,6 +674,7 @@ function updateTrack(uid,field,val){
     refreshAllTrackDropdowns();
   }
   scheduleValidate();
+  if(field==='name'||field==='chainage_start'||field==='chainage_end') drawSchematic();
 }
 
 function toggleJumps(uid){
@@ -653,6 +700,47 @@ function updateJump(uid,idx,field,val){
   const tr=STATE.tracks.find(t=>t._uid===uid);
   if(!tr||!tr.chainage_jumps[idx]) return;
   tr.chainage_jumps[idx][field]=field==='note'?val:+val;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STEP 4 — TRACK DISPLAY ORDER (CH-018, schematic-only, never saved)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Keeps STATE.schematicOrder in sync with STATE.tracks (adds any track not
+// yet present, drops any uid that no longer has a track) without changing
+// STATE.tracks itself or the order Step 1 / the saved JSON use.
+function ensureSchematicOrder(){
+  const ids=new Set(STATE.tracks.map(t=>t._uid));
+  STATE.schematicOrder=STATE.schematicOrder.filter(u=>ids.has(u));
+  STATE.tracks.forEach(t=>{ if(!STATE.schematicOrder.includes(t._uid)) STATE.schematicOrder.push(t._uid); });
+}
+
+function moveTrackOrder(uid,dir){
+  ensureSchematicOrder();
+  const i=STATE.schematicOrder.indexOf(uid);
+  const j=i+dir;
+  if(i<0||j<0||j>=STATE.schematicOrder.length) return;
+  [STATE.schematicOrder[i],STATE.schematicOrder[j]]=[STATE.schematicOrder[j],STATE.schematicOrder[i]];
+  renderTrackOrderCtrl();
+  drawSchematic();
+}
+
+function renderTrackOrderCtrl(){
+  const el=document.getElementById('track-order-ctrl');
+  if(!el) return;
+  ensureSchematicOrder();
+  if(STATE.schematicOrder.length<2){ el.innerHTML=''; return; }
+  const chips=STATE.schematicOrder.map((uid,idx)=>{
+    const tr=STATE.tracks.find(t=>t._uid===uid);
+    if(!tr) return '';
+    const isFirst=idx===0, isLast=idx===STATE.schematicOrder.length-1;
+    return `<span class="toc-chip">
+      <span class="toc-dot" style="background:${tr.color}"></span>${esc(tr.name||tr.track_id)}
+      <button onclick="moveTrackOrder('${uid}',-1)" ${isFirst?'disabled':''} title="Move up">▲</button>
+      <button onclick="moveTrackOrder('${uid}',1)" ${isLast?'disabled':''} title="Move down">▼</button>
+    </span>`;
+  }).join('');
+  el.innerHTML = `<span class="toc-label">Track order (schematic display only, not saved):</span>${chips}`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1127,45 +1215,71 @@ function validateCrossovers(){
 let schematicHitAreas=[];
 
 function drawSchematic(){
+  renderTrackOrderCtrl();
+
   const canvas=document.getElementById('schematic');
   const ctx=canvas.getContext('2d');
+  const scrollWrap=document.getElementById('schematic-scroll');
+  const labelsWrap=document.getElementById('schematic-labels');
 
   // Collect current data
-  const tracks=STATE.tracks;
+  ensureSchematicOrder();
+  const tracks=STATE.schematicOrder.map(uid=>STATE.tracks.find(t=>t._uid===uid)).filter(Boolean);
   const platforms=readTable('platforms');
   const crossovers=readTable('crossovers');
   const signals=readTable('signals');
-  const jumps=tracks.flatMap(t=>(t.chainage_jumps||[]).map(j=>({...j,track_id:t.track_id,_uid:t._uid})));
 
   if(!tracks.length){
     canvas.width=600; canvas.height=80;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.fillStyle='#aaa'; ctx.font='13px system-ui'; ctx.textAlign='center';
     ctx.fillText('Add tracks in Step 1 to see the schematic.',300,44);
+    if(labelsWrap) labelsWrap.innerHTML='';
     return;
   }
 
   // Layout constants
-  const PAD_L=80, PAD_R=40, PAD_TOP=40;
+  const PAD_L=16, PAD_R=30, PAD_TOP=30;
   const TRACK_SPACING=100;
   const TRACK_H=6;
-  const canvasW=Math.max(900, canvas.parentElement.clientWidth-2);
-  const canvasH=PAD_TOP*2 + tracks.length*TRACK_SPACING + 20;
+  const canvasH=PAD_TOP*2 + tracks.length*TRACK_SPACING + 10;
+
+  // ── Shared, fixed-scale chainage → pixel mapping (CH-018) ───────────────
+  // All tracks are mapped with ONE scale, derived from the visible viewport
+  // width standing for MAX_VISIBLE_CHAINAGE metres — never each track's own
+  // range stretched independently to fill the canvas (that was the bug that
+  // made a short track, e.g. Track 3 at ch 3000-4000, draw as long as a
+  // 0-5000 track). If the network's total chainage span exceeds the fixed
+  // scale, the canvas is drawn wider than the viewport and the wrapper
+  // scrolls horizontally instead of compressing the scale.
+  const viewportW=Math.max(280, (scrollWrap?scrollWrap.clientWidth:900)-2);
+  const globalMin=Math.min(...tracks.map(t=>t.chainage_start??0));
+  const globalMax=Math.max(...tracks.map(t=>t.chainage_end??0));
+  const totalSpan=Math.max(1, globalMax-globalMin);
+  const pixelsPerMeter=(viewportW-PAD_L-PAD_R)/MAX_VISIBLE_CHAINAGE;
+  const contentPx=totalSpan*pixelsPerMeter;
+  const canvasW=Math.max(viewportW, Math.ceil(contentPx+PAD_L+PAD_R));
+
   canvas.width=canvasW; canvas.height=canvasH;
   ctx.clearRect(0,0,canvasW,canvasH);
 
-  // Determine global chainage range (per-track independent — use a shared display scale based on lengths)
+  function chToX(ch){ return PAD_L + (ch-globalMin)*pixelsPerMeter; }
+
   const trackMeta=tracks.map((tr,ti)=>{
     const y=PAD_TOP + ti*TRACK_SPACING + TRACK_SPACING/2;
-    const chStart=tr.chainage_start||0;
-    const chEnd=tr.chainage_end||25000;
-    const chRange=chEnd-chStart||1;
-    const drawW=canvasW-PAD_L-PAD_R;
-    return {tr,y,chStart,chEnd,chRange,drawW};
+    return {tr,y,chStart:tr.chainage_start??0,chEnd:tr.chainage_end??0};
   });
 
-  function chToX(meta,ch){
-    return PAD_L + ((ch-meta.chStart)/meta.chRange)*meta.drawW;
+  // ── Sticky track-name sidebar (CH-018) ───────────────────────────────────
+  // Drawn as an HTML overlay outside the scrolling element (rather than
+  // ctx.fillText on the canvas) so the labels stay visible while the
+  // schematic scrolls horizontally.
+  if(labelsWrap){
+    labelsWrap.style.height=canvasH+'px';
+    labelsWrap.innerHTML=trackMeta.map(({tr,y})=>`
+      <div class="schematic-label-item" style="top:${y-9}px;height:18px">
+        <span class="schematic-label-dot" style="background:${tr.color||'#185FA5'}"></span>${esc(tr.name||tr.track_id)}
+      </div>`).join('');
   }
 
   schematicHitAreas=[];
@@ -1175,18 +1289,13 @@ function drawSchematic(){
 
   // ── Draw each track ──────────────────────────────────────────────────
   trackMeta.forEach(({tr,y,chStart,chEnd})=>{
-    const meta=trackMeta.find(m=>m.tr===tr);
-    const x0=chToX(meta,chStart), x1=chToX(meta,chEnd);
+    const x0=chToX(chStart), x1=chToX(chEnd);
 
     // Track line
     ctx.strokeStyle=tr.color||'#185FA5';
     ctx.lineWidth=TRACK_H;
     ctx.lineCap='butt';
     ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
-
-    // Track label
-    ctx.fillStyle='#444'; ctx.font='bold 11px system-ui'; ctx.textAlign='left';
-    ctx.fillText(tr.name||tr.track_id,4,y+4);
 
     // CH start/end labels
     ctx.fillStyle='#888'; ctx.font='10px system-ui'; ctx.textAlign='center';
@@ -1195,7 +1304,7 @@ function drawSchematic(){
 
     // Chainage jumps — short grey notch centred on track
     (tr.chainage_jumps||[]).forEach(j=>{
-      const xj=chToX(meta,j.from_ch);
+      const xj=chToX(j.from_ch);
       ctx.strokeStyle='#aaa'; ctx.lineWidth=2; ctx.setLineDash([]);
       ctx.beginPath(); ctx.moveTo(xj,y-8); ctx.lineTo(xj,y+8); ctx.stroke();
       schematicHitAreas.push({x:xj-5,y:y-9,w:10,h:18,tip:`CH Jump: ${j.from_ch}→${j.to_ch} (${tr.name})${j.note?' · '+j.note:''}`});
@@ -1210,7 +1319,7 @@ function drawSchematic(){
   platforms.forEach(p=>{
     const meta=trackMeta.find(m=>m.tr.track_id===p.track_id);
     if(!meta) return;
-    const x0=chToX(meta,p.from_ch), x1=chToX(meta,p.to_ch);
+    const x0=chToX(p.from_ch), x1=chToX(p.to_ch);
     const y=meta.y;
     const HALF_TRACK=TRACK_H/2;
     const PLT_H=8;
@@ -1257,7 +1366,7 @@ function drawSchematic(){
   signals.forEach(s=>{
     const meta=trackMeta.find(m=>m.tr.track_id===s.track_id);
     if(!meta) return;
-    const x=chToX(meta,s.chainage);
+    const x=chToX(s.chainage);
     const y=meta.y;
     const HALF_TRACK=TRACK_H/2;
     const POST=10, ARM=10, HEAD_R=4;
@@ -1300,8 +1409,8 @@ function drawSchematic(){
     const metaA=trackMeta.find(m=>m.tr.track_id===xo.turnout_A.track_id);
     const metaB=trackMeta.find(m=>m.tr.track_id===xo.turnout_B.track_id);
     if(!metaA||!metaB) return;
-    const xA=chToX(metaA,xo.turnout_A.chainage);
-    const xB=chToX(metaB,xo.turnout_B.chainage);
+    const xA=chToX(xo.turnout_A.chainage);
+    const xB=chToX(xo.turnout_B.chainage);
     const yA=metaA.y, yB=metaB.y;
     ctx.strokeStyle='#555'; ctx.lineWidth=TRACK_H; ctx.lineCap='round'; ctx.setLineDash([]);
     ctx.beginPath(); ctx.moveTo(xA,yA); ctx.lineTo(xB,yB); ctx.stroke();
@@ -1386,6 +1495,7 @@ function parseLayout(file){
 function applyLayout(data){
   // Reset
   STATE.tracks=[];
+  STATE.schematicOrder=[];
   trackCounter=0;
   ['platforms','gradients','speeds','crossovers','signals'].forEach(t=>{
     const tbody=document.getElementById('tbody-'+t);
